@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WolfVox Console</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/umd/lucide.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-main: #0a0a0a;
+            --bg-side: #000000;
+            --accent: #d3e2ff; /* Render-style blue-white */
+            --blue: #4d8dfa;
+            --border: #222222;
+            --text-dim: #888888;
+            --radius: 8px;
+        }
+
+        body {
+            margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-main); color: #ffffff;
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        }
+
+        /* Topbar - Glassmorphism */
+        .topbar {
+            height: 56px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px; background: var(--bg-side);
+        }
+
+        .logo { font-size: 14px; font-weight: 700; letter-spacing: 1px; color: var(--accent); }
+        .logo span { color: var(--text-dim); font-weight: 400; margin-left: 5px; }
+
+        /* Sidebar - The "Collection" */
+        .main { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar {
+            width: 260px; background: var(--bg-side); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; padding: 16px;
+        }
+
+        .sidebar-header {
+            font-size: 11px; font-weight: 600; color: var(--text-dim);
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .project-card {
+            padding: 10px 12px; border: 1px solid transparent; border-radius: var(--radius);
+            margin-bottom: 4px; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 10px; font-size: 14px;
+        }
+        .project-card:hover { background: #111; border-color: var(--border); }
+        .project-card.active { background: #111; border-color: var(--blue); color: var(--blue); }
+        .project-card i { width: 16px; color: var(--text-dim); }
+
+        /* Editor Section */
+        .content { flex: 1; display: flex; flex-direction: column; background: var(--bg-main); }
+        
+        .toolbar {
+            padding: 12px 24px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 15px;
+        }
+
+        .input-group { position: relative; flex: 1; max-width: 300px; }
+        .input-group input {
+            width: 100%; background: #000; border: 1px solid var(--border);
+            color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 14px; outline: none;
+        }
+        .input-group input:focus { border-color: var(--blue); }
+
+        /* Buttons */
+        button {
+            background: var(--blue); color: white; border: none;
+            padding: 8px 16px; border-radius: 6px; font-size: 13px;
+            font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;
+        }
+        button:hover { opacity: 0.9; }
+        button.secondary { background: #111; border: 1px solid var(--border); color: #ccc; }
+
+        #monaco-root { flex: 1; border-top: 1px solid var(--border); }
+
+        /* Status Toast */
+        #status {
+            position: fixed; bottom: 24px; right: 24px; background: #fff; color: #000;
+            padding: 12px 20px; border-radius: 30px; font-weight: 600; font-size: 13px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="topbar">
+        <div class="logo">WOLFVOX <span>DASHBOARD</span></div>
+        <div id="auth-area">
+            <button class="secondary" onclick="login()">Sign In with Google</button>
+        </div>
+    </header>
+
+    <div class="main">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                Your Projects 
+                <i data-lucide="plus" style="cursor:pointer" onclick="resetEditor()"></i>
+            </div>
+            <div id="project-list">
+                <div style="color: #444; font-size: 12px; padding: 10px;">No projects found.</div>
+            </div>
+        </aside>
+
+        <main class="content">
+            <div class="toolbar">
+                <div class="input-group">
+                    <input type="text" id="repo-name" placeholder="slug-name (e.g. portfolio)">
+                </div>
+                <button onclick="saveAndDeploy()">
+                    <i data-lucide="cloud-upload" style="width:16px"></i> Deploy
+                </button>
+                <div id="live-link"></div>
+            </div>
+            <div id="monaco-root"></div>
+        </main>
+    </div>
+
+    <div id="status">Deploying to WolfVox...</div>
+
+    <script>
+        // --- SUPABASE CONFIG ---
+        const _supabase = supabase.createClient('https://your-id.supabase.co', 'your-anon-key');
+        let _editor;
+        let _user = null;
+
+        // --- MONACO SETUP ---
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+        require(['vs/editor/editor.main'], () => {
+            _editor = monaco.editor.create(document.getElementById('monaco-root'), {
+                value: '',
+                language: 'html',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                padding: { top: 20 },
+                minimap: { enabled: false }
+            });
+        });
+
+        // --- AUTH LOGIC ---
+        async function checkSession() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (user) {
+                _user = user;
+                document.getElementById('auth-area').innerHTML = `<span style="font-size:12px;color:#888">${user.email}</span>`;
+                fetchUserProjects();
+            }
+        }
+
+        async function login() {
+            await _supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+        }
+
+        // --- PROJECT MANAGEMENT ---
+        async function fetchUserProjects() {
+            const username = _user.email.split('@')[0];
+            const { data } = await _supabase.storage.from('site-files').list(username);
+            const listEl = document.getElementById('project-list');
+            
+            if (data && data.length > 0) {
+                listEl.innerHTML = data.map(item => `
+                    <div class="project-card" onclick="openProject('${item.name}')">
+                        <i data-lucide="globe"></i> ${item.name}
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            }
+        }
+
+        async function openProject(name) {
+            const username = _user.email.split('@')[0];
+            document.getElementById('repo-name').value = name;
+            const { data } = await _supabase.storage.from('site-files').download(`${username}/${name}/index.html`);
+            if (data) _editor.setValue(await data.text());
+        }
+
+        async function saveAndDeploy() {
+            if (!_user) return login();
+            const name = document.getElementById('repo-name').value.trim();
+            if (!name) return alert("Enter a project name");
+
+            const username = _user.email.split('@')[0];
+            const code = _editor.getValue();
+            const file = new Blob([code], { type: 'text/html' });
+
+            notify("Updating production...");
+
+            const { error } = await _supabase.storage
+                .from('site-files')
+                .upload(`${username}/${name}/index.html`, file, { upsert: true });
+
+            if (!error) {
+                notify("Successfully deployed!");
+                const url = `https://wolfvox.onrender.com/${username}/${name}`;
+                document.getElementById('live-link').innerHTML = `<a href="${url}" target="_blank" style="color:var(--blue); font-size:12px; text-decoration:none;">View Site ↗</a>`;
+                fetchUserProjects();
+            }
+        }
+
+        function notify(msg) {
+            const t = document.getElementById('status');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        function resetEditor() {
+            document.getElementById('repo-name').value = '';
+            _editor.setValue('');
+        }
+
+        checkSession();
+        lucide.createIcons();
+    </script>
+</body>
+</html>
