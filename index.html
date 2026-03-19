@@ -25,7 +25,7 @@
 
     <nav class="flex items-center justify-between px-8 py-4 border-b border-white/10 sticky top-0 bg-black/50 backdrop-blur-md z-50">
         <div class="flex items-center gap-8">
-            <h1 class="text-xl font-bold tracking-tighter cursor-pointer" onclick="location.href='index.html'">WOLF<span class="text-gray-500">VOX</span></h1>
+            <h1 class="text-xl font-bold tracking-tighter cursor-pointer" onclick="location.href='/'">WOLF<span class="text-gray-500">VOX</span></h1>
             <div class="hidden md:flex gap-6 text-sm text-gray-400">
                 <a href="#" class="hover:text-white transition">Features</a>
                 <a href="#" class="hover:text-white transition">Docs</a>
@@ -92,37 +92,43 @@
     </footer>
 
 <script>
-    // Configuration for your URLs
-    const SIGNIN_URL = 'https://wolfvox.github.io/CloudHosting/login.html';
-    const CONSOLE_URL = 'https://wolfvox.github.io/CloudHosting/create.html';
+    // Constants for your routing
+    const SIGNIN_PATH = 'https://wolfvox.github.io/signin';
+    const CONSOLE_PATH = 'https://wolfvox.github.io/CloudHosting/create.html';
 
-    function handleAuthNavigation() {
+    // Core logic to check login status and navigate
+    function handleNavigation() {
         const user = localStorage.getItem('wv_user');
+        
         if (user) {
-            // If logged in, go to the project creator
-            window.location.href = CONSOLE_URL;
+            // If logged in, go directly to the console/dashboard
+            window.location.href = CONSOLE_PATH;
         } else {
-            // If not logged in, go to your login page
-            window.location.href = SIGNIN_URL;
+            // If not logged in, go to the signin page
+            window.location.href = SIGNIN_PATH;
         }
     }
 
-    // Attach logic to the buttons
-    document.getElementById('start-btn').addEventListener('click', handleAuthNavigation);
-    document.getElementById('nav-get-started').addEventListener('click', handleAuthNavigation);
+    // Set up click listeners
+    document.getElementById('start-btn').addEventListener('click', handleNavigation);
+    document.getElementById('nav-get-started').addEventListener('click', handleNavigation);
     
-    // Direct Sign In button logic
-    document.getElementById('signin-btn').addEventListener('click', () => {
-        window.location.href = SIGNIN_URL;
-    });
+    // Sign In button also checks state: if logged in, it acts as an "Account" shortcut
+    document.getElementById('signin-btn').addEventListener('click', handleNavigation);
 
-    // Check if user is already logged in to update button text
+    // Initial load check to update UI based on login status
     window.addEventListener('load', () => {
         const userStr = localStorage.getItem('wv_user');
         if (userStr) {
-            const user = JSON.parse(userStr);
-            document.getElementById('signin-btn').innerText = "Account";
-            document.getElementById('nav-get-started').innerText = "Dashboard";
+            try {
+                const user = JSON.parse(userStr);
+                // Update button text to show user is recognized
+                document.getElementById('signin-btn').innerText = "Account";
+                document.getElementById('nav-get-started').innerText = "Dashboard";
+                document.getElementById('start-btn').innerText = "Open Console";
+            } catch (e) {
+                console.error("Error parsing user data", e);
+            }
         }
     });
 </script>
