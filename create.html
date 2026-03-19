@@ -147,14 +147,57 @@
         });
 
         // --- AUTH LOGIC ---
-        async function checkSession() {
-            const { data: { user } } = await _supabase.auth.getUser();
-            if (user) {
-                _user = user;
-                document.getElementById('auth-area').innerHTML = `<span style="font-size:12px;color:#888">${user.email}</span>`;
-                fetchUserProjects();
-            }
-        }
+let _user = JSON.parse(localStorage.getItem('wv_user'));
+
+function checkSession() {
+    if (!_user) {
+        window.location.href = 'login.html'; // Kick out if no user found
+        return;
+    }
+    // Display the logged-in email from LocalStorage
+    document.getElementById('auth-area').innerHTML = `
+        <span style="font-size:12px;color:#888">${_user.email}</span>
+        <button class="secondary" onclick="logout()" style="margin-left:10px; padding:4px 8px;">Logout</button>
+    `;
+    fetchUserProjects();
+}
+
+function logout() {
+    localStorage.removeItem('wv_user');
+    window.location.href = 'index.html';
+}
+
+async function saveAndDeploy() {
+    if (!_user) return window.location.href = 'login.html';
+    
+    const name = document.getElementById('repo-name').value.trim();
+    if (!name) return alert("Enter a project name");
+
+    // Extract username from email (e.g., "john" from "john@gmail.com")
+    const username = _user.email.split('@')[0];
+    const code = _editor.getValue();
+    const file = new Blob([code], { type: 'text/html' });
+
+    notify("Updating production...");
+
+    // Upload to Supabase using the username from LocalStorage
+    const { error } = await _supabase.storage
+        .from('sites') // Ensure this matches your bucket name in server.js
+        .upload(`${username}/${name}/index.html`, file, { upsert: true });
+
+    if (!error) {
+        notify("Successfully deployed!");
+        const url = `https://wolfcloud.onrender.com/${username}/${name}`;
+        document.getElementById('live-link').innerHTML = `
+            <a href="${url}" target="_blank" style="color:var(--blue); font-size:12px; text-decoration:none;">
+                View Live Site ↗
+            </a>`;
+        fetchUserProjects();
+    } else {
+        console.error(error);
+        notify("Deployment failed. Check console.");
+    }
+}}
 
         async function login() {
             await _supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
@@ -182,7 +225,7 @@
             const { data } = await _supabase.storage.from('site-files').download(`${username}/${name}/index.html`);
             if (data) _editor.setValue(await data.text());
         }
-
+/*
         async function saveAndDeploy() {
             if (!_user) return login();
             const name = document.getElementById('repo-name').value.trim();
@@ -205,7 +248,7 @@
                 fetchUserProjects();
             }
         }
-
+*/
         function notify(msg) {
             const t = document.getElementById('status');
             t.innerText = msg;
