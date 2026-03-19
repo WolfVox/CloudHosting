@@ -2,267 +2,137 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>WolfVox Console</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/umd/lucide.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WolfVox | Create Project</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <style>
-        :root {
-            --bg-main: #0a0a0a;
-            --bg-side: #000000;
-            --accent: #d3e2ff; /* Render-style blue-white */
-            --blue: #4d8dfa;
-            --border: #222222;
-            --text-dim: #888888;
-            --radius: 8px;
+        body { font-family: 'Inter', sans-serif; background-color: #000; color: #fff; }
+        .glass-input {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.2s;
         }
-
-        body {
-            margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg-main); color: #ffffff;
-            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        .glass-input:focus {
+            border-color: #7a6cff;
+            background: rgba(255, 255, 255, 0.05);
+            outline: none;
         }
-
-        /* Topbar - Glassmorphism */
-        .topbar {
-            height: 56px; border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 24px; background: var(--bg-side);
+        .step-card {
+            border-left: 2px solid rgba(255, 255, 255, 0.1);
+            padding-left: 24px;
         }
-
-        .logo { font-size: 14px; font-weight: 700; letter-spacing: 1px; color: var(--accent); }
-        .logo span { color: var(--text-dim); font-weight: 400; margin-left: 5px; }
-
-        /* Sidebar - The "Collection" */
-        .main { display: flex; flex: 1; overflow: hidden; }
-
-        .sidebar {
-            width: 260px; background: var(--bg-side); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; padding: 16px;
-        }
-
-        .sidebar-header {
-            font-size: 11px; font-weight: 600; color: var(--text-dim);
-            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        .project-card {
-            padding: 10px 12px; border: 1px solid transparent; border-radius: var(--radius);
-            margin-bottom: 4px; cursor: pointer; transition: all 0.2s;
-            display: flex; align-items: center; gap: 10px; font-size: 14px;
-        }
-        .project-card:hover { background: #111; border-color: var(--border); }
-        .project-card.active { background: #111; border-color: var(--blue); color: var(--blue); }
-        .project-card i { width: 16px; color: var(--text-dim); }
-
-        /* Editor Section */
-        .content { flex: 1; display: flex; flex-direction: column; background: var(--bg-main); }
-        
-        .toolbar {
-            padding: 12px 24px; border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; gap: 15px;
-        }
-
-        .input-group { position: relative; flex: 1; max-width: 300px; }
-        .input-group input {
-            width: 100%; background: #000; border: 1px solid var(--border);
-            color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 14px; outline: none;
-        }
-        .input-group input:focus { border-color: var(--blue); }
-
-        /* Buttons */
-        button {
-            background: var(--blue); color: white; border: none;
-            padding: 8px 16px; border-radius: 6px; font-size: 13px;
-            font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;
-        }
-        button:hover { opacity: 0.9; }
-        button.secondary { background: #111; border: 1px solid var(--border); color: #ccc; }
-
-        #monaco-root { flex: 1; border-top: 1px solid var(--border); }
-
-        /* Status Toast */
-        #status {
-            position: fixed; bottom: 24px; right: 24px; background: #fff; color: #000;
-            padding: 12px 20px; border-radius: 30px; font-weight: 600; font-size: 13px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; z-index: 999;
-        }
+        /* Auth Guard Hide */
+        #main-content { display: none; }
     </style>
 </head>
-<body>
+<body class="antialiased">
 
-    <header class="topbar">
-        <div class="logo">WOLFVOX <span>DASHBOARD</span></div>
-        <div id="auth-area">
-            <button class="secondary" onclick="login()">Sign In with Google</button>
+    <!-- Navbar -->
+    <nav class="flex items-center justify-between px-8 py-4 border-b border-white/10 bg-black/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <h1 class="text-xl font-bold tracking-tighter cursor-pointer" onclick="location.href='/'">WOLF<span class="text-gray-500">VOX</span></h1>
+            <span class="text-xs bg-white/10 px-2 py-1 rounded text-gray-400">Console</span>
         </div>
-    </header>
+        <div id="user-profile" class="flex items-center gap-3">
+            <!-- Populated by JS -->
+        </div>
+    </nav>
 
-    <div class="main">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                Your Projects 
-                <i data-lucide="plus" style="cursor:pointer" onclick="resetEditor()"></i>
-            </div>
-            <div id="project-list">
-                <div style="color: #444; font-size: 12px; padding: 10px;">No projects found.</div>
-            </div>
-        </aside>
+    <!-- Main Content (Hidden until Auth Check) -->
+    <main id="main-content" class="max-w-4xl mx-auto px-6 py-16">
+        <header class="mb-12">
+            <h2 class="text-3xl font-semibold mb-2">Create New Project</h2>
+            <p class="text-gray-500">Deploy your static site to the WolfVox cloud via Supabase.</p>
+        </header>
 
-        <main class="content">
-            <div class="toolbar">
-                <div class="input-group">
-                    <input type="text" id="repo-name" placeholder="slug-name (e.g. portfolio)">
+        <div class="space-y-12">
+            <!-- Step 1: Project Identity -->
+            <section class="step-card">
+                <h3 class="text-sm font-bold uppercase tracking-widest text-gray-500 mb-6">1. Project Identity</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-2 uppercase">Display Name</label>
+                        <input type="text" id="proj-name" placeholder="My Awesome Site" class="w-full glass-input rounded-md px-4 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-2 uppercase">Project Slug (URL)</label>
+                        <div class="flex items-center">
+                            <span class="bg-white/5 border border-r-0 border-white/10 px-3 py-2 rounded-l-md text-gray-500 text-sm">wolfvox.io/</span>
+                            <input type="text" id="proj-slug" placeholder="my-site" class="w-full glass-input rounded-r-md px-4 py-2">
+                        </div>
+                    </div>
                 </div>
-                <button onclick="saveAndDeploy()">
-                    <i data-lucide="cloud-upload" style="width:16px"></i> Deploy
-                </button>
-                <div id="live-link"></div>
-            </div>
-            <div id="monaco-root"></div>
-        </main>
-    </div>
+            </section>
 
-    <div id="status">Deploying to WolfVox...</div>
+            <!-- Step 2: Source Code -->
+            <section class="step-card">
+                <h3 class="text-sm font-bold uppercase tracking-widest text-gray-500 mb-6">2. Content Source</h3>
+                <div class="border-2 border-dashed border-white/10 rounded-xl p-10 text-center hover:border-white/20 transition cursor-pointer">
+                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-600 mb-4"></i>
+                    <p class="text-sm text-gray-400">Drag and drop your ZIP folder here, or <span class="text-white underline">browse files</span></p>
+                    <input type="file" class="hidden" id="file-upload">
+                </div>
+            </section>
+
+            <!-- Action Area -->
+            <div class="pt-6 border-t border-white/10 flex items-center justify-between">
+                <p class="text-xs text-gray-500 max-w-sm">
+                    By clicking deploy, your files will be synced to Supabase Storage and served via our global edge network.
+                </p>
+                <button onclick="handleDeploy()" class="bg-white text-black px-8 py-3 rounded-md font-bold hover:bg-gray-200 transition">
+                    Deploy Project
+                </button>
+            </div>
+        </div>
+    </main>
 
     <script>
-        // --- SUPABASE CONFIG ---
-        const _supabase = supabase.createClient('https://your-id.supabase.co', 'your-anon-key');
-        let _editor;
-        let _user = null;
-
-        // --- MONACO SETUP ---
-        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
-        require(['vs/editor/editor.main'], () => {
-            _editor = monaco.editor.create(document.getElementById('monaco-root'), {
-                value: '',
-                language: 'html',
-                theme: 'vs-dark',
-                automaticLayout: true,
-                padding: { top: 20 },
-                minimap: { enabled: false }
-            });
-        });
-
-        // --- AUTH LOGIC ---
-let _user = JSON.parse(localStorage.getItem('wv_user'));
-
-function checkSession() {
-    if (!_user) {
-        window.location.href = 'login.html'; // Kick out if no user found
-        return;
-    }
-    // Display the logged-in email from LocalStorage
-    document.getElementById('auth-area').innerHTML = `
-        <span style="font-size:12px;color:#888">${_user.email}</span>
-        <button class="secondary" onclick="logout()" style="margin-left:10px; padding:4px 8px;">Logout</button>
-    `;
-    fetchUserProjects();
-}
-
-function logout() {
-    localStorage.removeItem('wv_user');
-    window.location.href = 'index.html';
-}
-
-async function saveAndDeploy() {
-    if (!_user) return window.location.href = 'login.html';
-    
-    const name = document.getElementById('repo-name').value.trim();
-    if (!name) return alert("Enter a project name");
-
-    // Extract username from email (e.g., "john" from "john@gmail.com")
-    const username = _user.email.split('@')[0];
-    const code = _editor.getValue();
-    const file = new Blob([code], { type: 'text/html' });
-
-    notify("Updating production...");
-
-    // Upload to Supabase using the username from LocalStorage
-    const { error } = await _supabase.storage
-        .from('sites') // Ensure this matches your bucket name in server.js
-        .upload(`${username}/${name}/index.html`, file, { upsert: true });
-
-    if (!error) {
-        notify("Successfully deployed!");
-        const url = `https://wolfcloud.onrender.com/${username}/${name}`;
-        document.getElementById('live-link').innerHTML = `
-            <a href="${url}" target="_blank" style="color:var(--blue); font-size:12px; text-decoration:none;">
-                View Live Site ↗
-            </a>`;
-        fetchUserProjects();
-    } else {
-        console.error(error);
-        notify("Deployment failed. Check console.");
-    }
-}}
-
-        async function login() {
-            await _supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+        // 1. AUTH GUARD: Check login immediately
+        const user = JSON.parse(localStorage.getItem('wv_user'));
+        
+        if (!user) {
+            // REDIRECT TO YOUR SIGNIN PAGE
+            window.location.href = 'https://wolfvox.github.io/signin';
+        } else {
+            // If logged in, show the page and populate UI
+            document.getElementById('main-content').style.display = 'block';
+            renderUserNav();
         }
 
-        // --- PROJECT MANAGEMENT ---
-        async function fetchUserProjects() {
-            const username = _user.email.split('@')[0];
-            const { data } = await _supabase.storage.from('site-files').list(username);
-            const listEl = document.getElementById('project-list');
-            
-            if (data && data.length > 0) {
-                listEl.innerHTML = data.map(item => `
-                    <div class="project-card" onclick="openProject('${item.name}')">
-                        <i data-lucide="globe"></i> ${item.name}
-                    </div>
-                `).join('');
-                lucide.createIcons();
+        function renderUserNav() {
+            const nav = document.getElementById('user-profile');
+            nav.innerHTML = `
+                <div class="text-right hidden sm:block">
+                    <p class="text-xs font-medium">${user.name}</p>
+                    <p class="text-[10px] text-gray-500">${user.email}</p>
+                </div>
+                <img src="${user.img}" class="w-8 h-8 rounded-full border border-white/20">
+                <button onclick="logout()" class="text-gray-500 hover:text-red-400 transition ml-2">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            `;
+        }
+
+        function logout() {
+            localStorage.removeItem('wv_user');
+            window.location.href = 'https://wolfvox.github.io/signin';
+        }
+
+        function handleDeploy() {
+            const name = document.getElementById('proj-name').value;
+            const slug = document.getElementById('proj-slug').value;
+
+            if(!name || !slug) {
+                alert("Please fill in project details.");
+                return;
             }
+
+            alert(`Starting deployment for ${name}... (Supabase Integration logic goes here)`);
         }
-
-        async function openProject(name) {
-            const username = _user.email.split('@')[0];
-            document.getElementById('repo-name').value = name;
-            const { data } = await _supabase.storage.from('site-files').download(`${username}/${name}/index.html`);
-            if (data) _editor.setValue(await data.text());
-        }
-/*
-        async function saveAndDeploy() {
-            if (!_user) return login();
-            const name = document.getElementById('repo-name').value.trim();
-            if (!name) return alert("Enter a project name");
-
-            const username = _user.email.split('@')[0];
-            const code = _editor.getValue();
-            const file = new Blob([code], { type: 'text/html' });
-
-            notify("Updating production...");
-
-            const { error } = await _supabase.storage
-                .from('site-files')
-                .upload(`${username}/${name}/index.html`, file, { upsert: true });
-
-            if (!error) {
-                notify("Successfully deployed!");
-                const url = `https://wolfvox.onrender.com/${username}/${name}`;
-                document.getElementById('live-link').innerHTML = `<a href="${url}" target="_blank" style="color:var(--blue); font-size:12px; text-decoration:none;">View Site ↗</a>`;
-                fetchUserProjects();
-            }
-        }
-*/
-        function notify(msg) {
-            const t = document.getElementById('status');
-            t.innerText = msg;
-            t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 3000);
-        }
-
-        function resetEditor() {
-            document.getElementById('repo-name').value = '';
-            _editor.setValue('');
-        }
-
-        checkSession();
-        lucide.createIcons();
     </script>
 </body>
 </html>
