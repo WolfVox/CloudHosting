@@ -105,6 +105,15 @@
     <footer class="mt-32 border-t border-white/5 py-12 text-center">
         <p class="text-xs text-gray-600">© 2026 WolfVox. Built for the modern web.</p>
     </footer>
-
+<script>
+    document.getElementById('start-btn').onclick = function() {
+    const user = localStorage.getItem('wv_user');
+    if (user) {
+        window.location.href = 'create.html'; // Go to console if logged in
+    } else {
+        window.location.href = 'login.html';  // Go to login if not
+    }
+};
+</script>
 </body>
 </html>
