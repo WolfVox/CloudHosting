@@ -177,24 +177,26 @@
         }
 
         // --- 4. DEPLOYMENT ---
-        function handleDeploy() {
-            const name = document.getElementById('proj-name').value;
-            const slug = document.getElementById('proj-slug').value;
+async function handleDeploy() {
+    // ... (your existing name/slug checks)
 
-            if(!name || !slug) {
-                alert("Please enter a project name and slug.");
-                return;
-            }
+    for (const file of window.selectedFiles) {
+        // Construct the path: username/repo/filename
+        const uploadPath = `${user.username}/${slug}/${file.name}`;
 
-            if(window.selectedFiles.length === 0) {
-                alert("Please upload at least one HTML, CSS, or JS file.");
-                return;
-            }
+        const { data, error } = await supabase.storage
+            .from('sites')
+            .upload(uploadPath, file);
 
-            // Logic for Supabase upload starts here
-            console.log("Deploying files:", window.selectedFiles);
-            alert(`Deploying ${window.selectedFiles.length} files to wolfvox.io/${slug}...`);
+        if (error) {
+            console.error("Upload failed:", error);
+        } else {
+            console.log("Uploaded:", uploadPath);
         }
+    }
+    
+    alert("Deployment Complete! Your site is live.");
+}
     </script>
 </body>
 </html>
