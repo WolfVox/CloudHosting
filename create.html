@@ -178,24 +178,45 @@
 
         // --- 4. DEPLOYMENT ---
 async function handleDeploy() {
-    // ... (your existing name/slug checks)
+    // 1. Get the values from the inputs
+    const name = document.getElementById('proj-name').value;
+    const slug = document.getElementById('proj-slug').value; // <--- THIS LINE IS REQUIRED
+
+    // 2. Validation
+    if(!name || !slug) {
+        alert("Please enter a project name and slug.");
+        return;
+    }
+
+    if(window.selectedFiles.length === 0) {
+        alert("Please upload at least one HTML, CSS, or JS file.");
+        return;
+    }
+
+    // 3. Upload Logic
+    // Using the 'user' object from your localStorage check at the top of the script
+    const username = user.name.toLowerCase().replace(/\s+/g, '-'); 
 
     for (const file of window.selectedFiles) {
-        // Construct the path: username/repo/filename
-        const uploadPath = `${user.username}/${slug}/${file.name}`;
+        // Now 'slug' is defined and can be used here
+        const uploadPath = `${username}/${slug}/${file.name}`;
+        
+        console.log("Uploading to:", uploadPath);
 
         const { data, error } = await supabase.storage
             .from('sites')
-            .upload(uploadPath, file);
+            .upload(uploadPath, file, {
+                upsert: true // This overwrites the file if it already exists
+            });
 
         if (error) {
-            console.error("Upload failed:", error);
-        } else {
-            console.log("Uploaded:", uploadPath);
+            console.error("Upload error:", error.message);
+            alert("Upload failed: " + error.message);
+            return;
         }
     }
-    
-    alert("Deployment Complete! Your site is live.");
+
+    alert(`Success! Your site is live at: https://your-render-url.com/${username}/${slug}`);
 }
     </script>
 </body>
