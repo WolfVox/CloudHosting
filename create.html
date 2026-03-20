@@ -97,155 +97,139 @@
         </section>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        // --- 1. SAFE SUPABASE INITIALIZATION ---
-        // We use window.sb to avoid "already declared" errors
-        if (!window.sb) {
-            const SB_URL = "https://lqdrtozuoslhufhpqwae.supabase.co";
-            const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZHJ0b3p1b3NsaHVmaHBxd2FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODU1MDgsImV4cCI6MjA4ODU2MTUwOH0.0WScKpedr7AB2O93bVmXXar5R8KcUPmHXyUSndIxF2o";
-            window.sb = supabasejs.createClient(SB_URL, SB_KEY);
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+    // --- 2. INITIALIZE CAREFULLY ---
+    let sb; // Use a simple variable name
+
+    async function initSupabase() {
+        const SB_URL = "https://lqdrtozuoslhufhpqwae.supabase.co";
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZHJ0b3p1b3NsaHVmaHBxd2FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODU1MDgsImV4cCI6MjA4ODU2MTUwOH0.0WScKpedr7AB2O93bVmXXar5R8KcUPmHXyUSndIxF2o";
+        
+        // Use the correct global object name: 'supabase' (lowercase)
+        if (typeof supabase !== 'undefined') {
+            sb = supabase.createClient(SB_URL, SB_KEY);
+            return true;
+        } else {
+            console.error("Supabase library failed to load from CDN.");
+            return false;
         }
+    }
 
-        const user = JSON.parse(localStorage.getItem('wv_user'));
-        window.selectedFiles = [];
+    // --- 3. STARTUP LOGIC ---
+    const user = JSON.parse(localStorage.getItem('wv_user'));
+    window.selectedFiles = [];
 
-        // --- 2. STARTUP ---
+    document.addEventListener('DOMContentLoaded', async () => {
         if (!user) {
             window.location.href = 'https://wolfvox.github.io/signin';
-        } else {
-            initApp();
+            return;
         }
 
-        function initApp() {
+        const ready = await initSupabase();
+        if (ready) {
             renderUserNav();
             loadUserProjects();
             setupDragAndDrop();
+        } else {
+            document.getElementById('project-list').innerHTML = "Connection Error";
+        }
+    });
+
+    // --- 4. THE REST OF YOUR FUNCTIONS ---
+    function renderUserNav() {
+        const nav = document.getElementById('user-profile');
+        nav.innerHTML = `
+            <div class="text-right hidden sm:block">
+                <p class="text-xs font-medium">${user.name}</p>
+                <p class="text-[10px] text-gray-500">${user.email}</p>
+            </div>
+            <img src="${user.img}" class="w-8 h-8 rounded-full border border-white/20">
+            <button onclick="logout()" class="text-gray-500 hover:text-red-400 transition ml-2"><i class="fa-solid fa-right-from-bracket"></i></button>
+        `;
+    }
+
+    async function loadUserProjects() {
+        const username = user.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const listContainer = document.getElementById('project-list');
+
+        const { data, error } = await sb.storage.from('sites').list(username);
+
+        if (error || !data || data.length === 0) {
+            listContainer.innerHTML = '<p class="text-[10px] text-gray-700">No projects yet.</p>';
+            return;
         }
 
-        function renderUserNav() {
-            const nav = document.getElementById('user-profile');
-            nav.innerHTML = `
-                <div class="text-right hidden sm:block">
-                    <p class="text-xs font-medium">${user.name}</p>
-                    <p class="text-[10px] text-gray-500">${user.email}</p>
-                </div>
-                <img src="${user.img}" class="w-8 h-8 rounded-full border border-white/20">
-                <button onclick="logout()" class="text-gray-500 hover:text-red-400 transition ml-2"><i class="fa-solid fa-right-from-bracket"></i></button>
-            `;
-        }
+        listContainer.innerHTML = data.map(item => `
+            <div onclick="prepUpdate('${item.name}')" class="group flex items-center justify-between p-2 hover:bg-white/5 rounded cursor-pointer transition">
+                <span class="text-sm text-gray-400 group-hover:text-white truncate">${item.name}</span>
+                <i class="fa-solid fa-chevron-right text-[10px] text-gray-800 group-hover:text-gray-400"></i>
+            </div>
+        `).join('');
+    }
 
-        function logout() {
-            localStorage.removeItem('wv_user');
-            window.location.href = 'https://wolfvox.github.io/signin';
-        }
-
-        // --- 3. SIDEBAR LOGIC ---
-        async function loadUserProjects() {
-            const username = user.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const listContainer = document.getElementById('project-list');
-
-            try {
-                const { data, error } = await window.sb.storage.from('sites').list(username);
-                if (error) throw error;
-
-                if (!data || data.length === 0) {
-                    listContainer.innerHTML = '<p class="text-[10px] text-gray-700">No projects yet.</p>';
-                    return;
-                }
-
-                listContainer.innerHTML = data.map(item => `
-                    <div onclick="prepUpdate('${item.name}')" class="group flex items-center justify-between p-2 hover:bg-white/5 rounded cursor-pointer transition">
-                        <span class="text-sm text-gray-400 group-hover:text-white truncate">${item.name}</span>
-                        <i class="fa-solid fa-chevron-right text-[10px] text-gray-800 group-hover:text-gray-400"></i>
-                    </div>
-                `).join('');
-            } catch (err) {
-                listContainer.innerHTML = '<p class="text-[10px] text-red-500">Error loading list.</p>';
-            }
-        }
-
-        function prepUpdate(slug) {
-            document.getElementById('proj-name').value = slug;
-            document.getElementById('proj-slug').value = slug;
-            document.getElementById('proj-slug').disabled = true;
-            document.getElementById('form-title').innerText = "Update Project";
-            document.getElementById('deploy-btn').innerText = "Push Updates";
-            fileLabel.innerHTML = `Ready to update <span class="text-white font-bold">${slug}</span>`;
-        }
-
-        function resetForm() {
-            document.getElementById('proj-name').value = "";
-            document.getElementById('proj-slug').value = "";
-            document.getElementById('proj-slug').disabled = false;
-            document.getElementById('form-title').innerText = "Create New Project";
-            document.getElementById('deploy-btn').innerText = "Deploy Project";
-            window.selectedFiles = [];
-            fileLabel.innerHTML = `Drag & drop files or <span class="text-white underline">browse</span>`;
-        }
-
-        // --- 4. DRAG AND DROP ---
+    function setupDragAndDrop() {
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-upload');
         const fileLabel = document.getElementById('file-label');
 
-        function setupDragAndDrop() {
-            dropZone.addEventListener('click', () => fileInput.click());
-            fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
-                dropZone.addEventListener(name, (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                });
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
+            dropZone.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
             });
+        });
 
-            dropZone.addEventListener('dragover', () => dropZone.classList.add('drag-over'));
-            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-            dropZone.addEventListener('drop', (e) => {
-                dropZone.classList.remove('drag-over');
-                handleFiles(e.dataTransfer.files);
-            });
+        dropZone.addEventListener('dragover', () => dropZone.classList.add('drag-over'));
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        dropZone.addEventListener('drop', (e) => {
+            dropZone.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files);
+        });
+    }
+
+    function handleFiles(files) {
+        const allowed = ['html', 'css', 'js'];
+        const valid = Array.from(files).filter(f => allowed.includes(f.name.split('.').pop().toLowerCase()));
+        if (valid.length > 0) {
+            window.selectedFiles = valid;
+            document.getElementById('file-label').innerHTML = `<span class="text-white font-bold">${valid.length} files</span> selected.`;
         }
+    }
 
-        function handleFiles(files) {
-            const allowed = ['html', 'css', 'js'];
-            const valid = Array.from(files).filter(f => allowed.includes(f.name.split('.').pop().toLowerCase()));
-            if (valid.length > 0) {
-                window.selectedFiles = valid;
-                fileLabel.innerHTML = `<span class="text-white font-bold">${valid.length} files</span> ready for sync.`;
-            }
+    async function handleDeploy() {
+        const slug = document.getElementById('proj-slug').value;
+        const username = user.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (!slug || window.selectedFiles.length === 0) return alert("Need slug and files!");
+
+        const btn = document.getElementById('deploy-btn');
+        btn.innerText = "Syncing...";
+        
+        for (const file of window.selectedFiles) {
+            const path = `${username}/${slug}/${file.name}`;
+            await sb.storage.from('sites').upload(path, file, { upsert: true });
         }
+        
+        alert("Done!");
+        btn.innerText = "Deploy Project";
+        loadUserProjects();
+    }
 
-        // --- 5. DEPLOY ---
-        async function handleDeploy() {
-            const slug = document.getElementById('proj-slug').value;
-            const username = user.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    function logout() {
+        localStorage.removeItem('wv_user');
+        window.location.href = 'https://wolfvox.github.io/signin';
+    }
 
-            if (!slug || window.selectedFiles.length === 0) {
-                alert("Missing slug or files!");
-                return;
-            }
-
-            const btn = document.getElementById('deploy-btn');
-            btn.innerText = "Syncing...";
-            btn.disabled = true;
-
-            try {
-                for (const file of window.selectedFiles) {
-                    const path = `${username}/${slug}/${file.name}`;
-                    const { error } = await window.sb.storage.from('sites').upload(path, file, { upsert: true });
-                    if (error) throw error;
-                }
-                alert("Deployment successful!");
-                loadUserProjects();
-            } catch (err) {
-                alert("Sync Error: " + err.message);
-            } finally {
-                btn.innerText = slug ? "Push Updates" : "Deploy Project";
-                btn.disabled = false;
-            }
-        }
-    </script>
+    function prepUpdate(slug) {
+        document.getElementById('proj-name').value = slug;
+        document.getElementById('proj-slug').value = slug;
+        document.getElementById('proj-slug').disabled = true;
+        document.getElementById('form-title').innerText = "Update Project";
+    }
+</script>
 </body>
 </html>
