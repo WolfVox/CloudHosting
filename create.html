@@ -88,7 +88,15 @@
             </div>
         </div>
     </main>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // These are for the BROWSER to talk to Supabase
+  const SB_URL = "https://lqdrtozuoslhufhpqwae.supabase.co";
+  const SB_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZHJ0b3p1b3NsaHVmaHBxd2FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODU1MDgsImV4cCI6MjA4ODU2MTUwOH0.0WScKpedr7AB2O93bVmXXar5R8KcUPmHXyUSndIxF2o";
+  
+  // Initialize the global 'supabase' variable
+  const supabase = supabasejs.createClient(SB_URL, SB_ANON_KEY);
+</script>
     <script>
         // --- 1. AUTH & UI INITIALIZATION ---
         const user = JSON.parse(localStorage.getItem('wv_user'));
