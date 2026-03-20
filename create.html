@@ -25,11 +25,8 @@
             border-left: 2px solid rgba(255, 255, 255, 0.1);
             padding-left: 24px;
         }
-        /* Fixed: Ensure main is visible if JS fails to toggle it */
         #main-content { display: flex; min-height: calc(100vh - 70px); }
-        
         .drag-over { border-color: #7a6cff !important; background: rgba(122, 108, 255, 0.05); }
-        
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
     </style>
@@ -41,8 +38,7 @@
             <h1 class="text-xl font-bold tracking-tighter cursor-pointer" onclick="location.href='/'">WOLF<span class="text-gray-500">VOX</span></h1>
             <span class="text-xs bg-white/10 px-2 py-1 rounded text-gray-400">Console</span>
         </div>
-        <div id="user-profile" class="flex items-center gap-3">
-            </div>
+        <div id="user-profile" class="flex items-center gap-3"></div>
     </nav>
 
     <main id="main-content">
@@ -57,7 +53,7 @@
             <div class="max-w-3xl mx-auto">
                 <header class="mb-10">
                     <h2 id="form-title" class="text-3xl font-semibold mb-2">Create New Project</h2>
-                    <p class="text-gray-500 text-sm">Deploy your static site or select a project from the sidebar to update.</p>
+                    <p class="text-gray-500 text-sm">Deploy your static site or select a project to update.</p>
                 </header>
 
                 <div class="space-y-10">
@@ -88,9 +84,7 @@
                     </section>
 
                     <div class="pt-6 border-t border-white/10 flex items-center justify-between">
-                        <p class="text-[10px] text-gray-500 max-w-[250px]">
-                            Files are synced to Supabase. Ensure your entry point is named <b>index.html</b>.
-                        </p>
+                        <p class="text-[10px] text-gray-500 max-w-[250px]">Ensure your entry point is named <b>index.html</b>.</p>
                         <div class="flex gap-3">
                             <button onclick="resetForm()" class="text-xs text-gray-500 hover:text-white transition">Cancel</button>
                             <button onclick="handleDeploy()" id="deploy-btn" class="bg-white text-black px-6 py-2 rounded-md text-sm font-bold hover:bg-gray-200 transition">
@@ -105,20 +99,28 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // --- CONFIG ---
-        const SB_URL = "https://lqdrtozuoslhufhpqwae.supabase.co";
-        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZHJ0b3p1b3NsaHVmaHBxd2FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODU1MDgsImV4cCI6MjA4ODU2MTUwOH0.0WScKpedr7AB2O93bVmXXar5R8KcUPmHXyUSndIxF2o";
-        const supabase = supabasejs.createClient(SB_URL, SB_KEY);
+        // --- 1. SAFE SUPABASE INITIALIZATION ---
+        // We use window.sb to avoid "already declared" errors
+        if (!window.sb) {
+            const SB_URL = "https://lqdrtozuoslhufhpqwae.supabase.co";
+            const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZHJ0b3p1b3NsaHVmaHBxd2FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODU1MDgsImV4cCI6MjA4ODU2MTUwOH0.0WScKpedr7AB2O93bVmXXar5R8KcUPmHXyUSndIxF2o";
+            window.sb = supabasejs.createClient(SB_URL, SB_KEY);
+        }
 
         const user = JSON.parse(localStorage.getItem('wv_user'));
         window.selectedFiles = [];
 
-        // --- INIT ---
+        // --- 2. STARTUP ---
         if (!user) {
             window.location.href = 'https://wolfvox.github.io/signin';
         } else {
+            initApp();
+        }
+
+        function initApp() {
             renderUserNav();
             loadUserProjects();
+            setupDragAndDrop();
         }
 
         function renderUserNav() {
@@ -129,9 +131,7 @@
                     <p class="text-[10px] text-gray-500">${user.email}</p>
                 </div>
                 <img src="${user.img}" class="w-8 h-8 rounded-full border border-white/20">
-                <button onclick="logout()" class="text-gray-500 hover:text-red-400 transition ml-2">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
+                <button onclick="logout()" class="text-gray-500 hover:text-red-400 transition ml-2"><i class="fa-solid fa-right-from-bracket"></i></button>
             `;
         }
 
@@ -140,24 +140,29 @@
             window.location.href = 'https://wolfvox.github.io/signin';
         }
 
-        // --- SIDEBAR LOGIC ---
+        // --- 3. SIDEBAR LOGIC ---
         async function loadUserProjects() {
             const username = user.name.toLowerCase().replace(/[^a-z0-9]/g, '');
             const listContainer = document.getElementById('project-list');
 
-            const { data, error } = await supabase.storage.from('sites').list(username);
+            try {
+                const { data, error } = await window.sb.storage.from('sites').list(username);
+                if (error) throw error;
 
-            if (error || !data || data.length === 0) {
-                listContainer.innerHTML = '<p class="text-[10px] text-gray-700">No projects yet.</p>';
-                return;
+                if (!data || data.length === 0) {
+                    listContainer.innerHTML = '<p class="text-[10px] text-gray-700">No projects yet.</p>';
+                    return;
+                }
+
+                listContainer.innerHTML = data.map(item => `
+                    <div onclick="prepUpdate('${item.name}')" class="group flex items-center justify-between p-2 hover:bg-white/5 rounded cursor-pointer transition">
+                        <span class="text-sm text-gray-400 group-hover:text-white truncate">${item.name}</span>
+                        <i class="fa-solid fa-chevron-right text-[10px] text-gray-800 group-hover:text-gray-400"></i>
+                    </div>
+                `).join('');
+            } catch (err) {
+                listContainer.innerHTML = '<p class="text-[10px] text-red-500">Error loading list.</p>';
             }
-
-            listContainer.innerHTML = data.map(item => `
-                <div onclick="prepUpdate('${item.name}')" class="group flex items-center justify-between p-2 hover:bg-white/5 rounded cursor-pointer transition border border-transparent">
-                    <span class="text-sm text-gray-400 group-hover:text-white truncate">${item.name}</span>
-                    <i class="fa-solid fa-chevron-right text-[10px] text-gray-800 group-hover:text-gray-400"></i>
-                </div>
-            `).join('');
         }
 
         function prepUpdate(slug) {
@@ -166,8 +171,7 @@
             document.getElementById('proj-slug').disabled = true;
             document.getElementById('form-title').innerText = "Update Project";
             document.getElementById('deploy-btn').innerText = "Push Updates";
-            document.getElementById('file-label').innerHTML = `Select files to update <span class="text-white font-bold">${slug}</span>`;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            fileLabel.innerHTML = `Ready to update <span class="text-white font-bold">${slug}</span>`;
         }
 
         function resetForm() {
@@ -177,63 +181,68 @@
             document.getElementById('form-title').innerText = "Create New Project";
             document.getElementById('deploy-btn').innerText = "Deploy Project";
             window.selectedFiles = [];
-            document.getElementById('file-label').innerHTML = `Drag and drop files or <span class="text-white underline">browse</span>`;
+            fileLabel.innerHTML = `Drag & drop files or <span class="text-white underline">browse</span>`;
         }
 
-        // --- UPLOAD LOGIC ---
+        // --- 4. DRAG AND DROP ---
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-upload');
         const fileLabel = document.getElementById('file-label');
 
-        dropZone.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+        function setupDragAndDrop() {
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
-            dropZone.addEventListener(name, (e) => { e.preventDefault(); e.stopPropagation(); });
-        });
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
+                dropZone.addEventListener(name, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+            });
 
-        dropZone.addEventListener('dragover', () => dropZone.classList.add('drag-over'));
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-        dropZone.addEventListener('drop', (e) => {
-            dropZone.classList.remove('drag-over');
-            handleFiles(e.dataTransfer.files);
-        });
+            dropZone.addEventListener('dragover', () => dropZone.classList.add('drag-over'));
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+            dropZone.addEventListener('drop', (e) => {
+                dropZone.classList.remove('drag-over');
+                handleFiles(e.dataTransfer.files);
+            });
+        }
 
         function handleFiles(files) {
             const allowed = ['html', 'css', 'js'];
             const valid = Array.from(files).filter(f => allowed.includes(f.name.split('.').pop().toLowerCase()));
             if (valid.length > 0) {
                 window.selectedFiles = valid;
-                fileLabel.innerHTML = `<span class="text-white font-bold">${valid.length} files</span> ready.`;
+                fileLabel.innerHTML = `<span class="text-white font-bold">${valid.length} files</span> ready for sync.`;
             }
         }
 
+        // --- 5. DEPLOY ---
         async function handleDeploy() {
             const slug = document.getElementById('proj-slug').value;
             const username = user.name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
             if (!slug || window.selectedFiles.length === 0) {
-                alert("Please add a slug and files.");
+                alert("Missing slug or files!");
                 return;
             }
 
             const btn = document.getElementById('deploy-btn');
-            const originalText = btn.innerText;
             btn.innerText = "Syncing...";
             btn.disabled = true;
 
             try {
                 for (const file of window.selectedFiles) {
                     const path = `${username}/${slug}/${file.name}`;
-                    const { error } = await supabase.storage.from('sites').upload(path, file, { upsert: true });
+                    const { error } = await window.sb.storage.from('sites').upload(path, file, { upsert: true });
                     if (error) throw error;
                 }
-                alert("Site updated successfully!");
+                alert("Deployment successful!");
                 loadUserProjects();
             } catch (err) {
-                alert("Error: " + err.message);
+                alert("Sync Error: " + err.message);
             } finally {
-                btn.innerText = originalText;
+                btn.innerText = slug ? "Push Updates" : "Deploy Project";
                 btn.disabled = false;
             }
         }
