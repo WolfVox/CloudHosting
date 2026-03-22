@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WolfVox™ | Cloud Docs</title>
+    <link rel="icon" type="image/x-icon" href="https://github.com/WolfVox/wolfvox.github.io/blob/main/WolfVoxLogo.png?raw=true">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030303;
+            --header: #000000;
+            --card-bg: #0a0a0a;
+            --border: rgba(255, 255, 255, 0.08);
+            --accent: #9333ea; /* Cloud Purple */
+            --text-main: #eeeeee;
+            --text-dim: #a1a1aa;
+            --render-green: #22c55e;
+            --error: #ff4d4d;
+        }
+
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        body { background: var(--bg); color: var(--text-main); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        /* NAVIGATION */
+        nav {
+            display: flex; align-items: center; gap: 20px;
+            padding: 12px 30px; background: var(--header); border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .nav-logo { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
+        .nav-logo h1 { font-size: 18px; margin: 0; color: white; text-transform: uppercase; letter-spacing: -0.5px; }
+
+        .sub-nav {
+            display: flex; gap: 20px; padding: 10px 30px; 
+            background: #050505; border-bottom: 1px solid var(--border);
+        }
+        .sub-btn {
+            background: transparent; border: none; color: var(--text-dim);
+            padding: 5px 0; cursor: pointer; font-size: 13px; transition: 0.2s;
+        }
+        .sub-btn.active { color: white; border-bottom: 2px solid white; }
+        .sub-btn:hover { color: white; }
+
+        /* LAYOUT */
+        .docs-container { display: flex; flex: 1; overflow: hidden; }
+
+        /* SIDEBAR */
+        .sidebar { 
+            width: 280px; background: var(--bg); border-right: 1px solid var(--border); 
+            padding: 30px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;
+        }
+        .side-link { 
+            text-decoration: none; color: var(--text-dim); font-size: 14px; padding: 10px 12px; 
+            border-radius: 8px; transition: 0.2s; 
+        }
+        .side-link:hover { background: rgba(255, 255, 255, 0.05); color: white; }
+        .side-link.active { background: rgba(147, 51, 234, 0.1); color: var(--accent); font-weight: 600; }
+        .side-title { font-size: 11px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 1.5px; margin-top: 25px; margin-bottom: 5px; font-weight: 800; opacity: 0.5; }
+
+        /* CONTENT AREA */
+        .content { flex: 1; padding: 60px 80px; overflow-y: auto; line-height: 1.7; }
+        section { margin-bottom: 80px; max-width: 850px; }
+        
+        h1 { font-size: 42px; margin-bottom: 20px; letter-spacing: -1px; background: linear-gradient(180deg, #fff 0%, #a1a1a1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        h2 { font-size: 24px; margin-top: 40px; margin-bottom: 15px; color: white; }
+        p { color: var(--text-dim); font-size: 16px; margin-bottom: 20px; }
+        b { color: white; }
+
+        /* COMPONENTS */
+        .code-block { 
+            background: #000; border: 1px solid var(--border); padding: 20px; 
+            border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); 
+            margin: 25px 0; position: relative;
+        }
+        .code-block::before { content: "TERMINAL"; position: absolute; top: -10px; left: 15px; background: var(--bg); padding: 0 10px; font-size: 10px; color: var(--text-dim); }
+
+        .alert { 
+            padding: 20px; border-radius: 12px; background: rgba(147, 51, 234, 0.05); 
+            border: 1px solid rgba(147, 51, 234, 0.2); color: #d8b4fe; font-size: 15px; margin: 25px 0;
+        }
+        .WarnAlert { 
+            padding: 20px; border-radius: 12px; background: rgba(34, 197, 94, 0.05); 
+            border-left: 4px solid var(--render-green); color: #86efac; font-size: 15px; margin: 25px 0;
+        }
+
+        ul { padding-left: 20px; color: var(--text-dim); }
+        li { margin-bottom: 10px; }
+
+        /* Custom Scrollbar */
+        .content::-webkit-scrollbar { width: 6px; }
+        .content::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="nav-logo">
+        <img src="https://github.com/WolfVox/wolfvox.github.io/blob/main/WolfVoxLogo.png?raw=true" height="28px" width="28px">
+        <h1>Wolf<span style="color:var(--text-dim)">Vox</span></h1>
+    </a>
+    <div style="flex-grow: 1;"></div>
+    <div style="font-size: 13px; color: var(--text-dim);">
+        Cloud Engine <span style="color: var(--render-green);">v1.0 Stable</span>
+    </div>
+</nav>
+
+<div class="sub-nav">
+    <button class="sub-btn" onclick="location.href='/CloudHosting'">Overview</button>
+    <button class="sub-btn active">Docs</button>
+    <button class="sub-btn">API Reference</button>
+    <button class="sub-btn">System Status</button>
+</div>
+
+<div class="docs-container">
+    <div class="sidebar">
+        <div class="side-title">Deployment</div>
+        <a href="#upload" class="side-link">How to Upload</a>
+        <a href="#update" class="side-link">How to Update</a>
+        <a href="#routing" class="side-link">Routing & URLs</a>
+        
+        <div class="side-title">Infrastructure</div>
+        <a href="#persistence" class="side-link">Data Persistence</a>
+        <a href="#supabase" class="side-link">Supabase Integration</a>
+        
+        <div class="side-title">Support</div>
+        <a href="#limits" class="side-link">Usage Limits</a>
+        <a href="#bans" class="side-link">Policy Enforcement</a>
+    </div>
+
+    <div class="content">
+        
+        <section id="upload">
+            <h1>Deploying to WolfVox</h1>
+            <p>WolfVox Cloud is built for instant deployments. We've removed the friction of Git pushes and SSH keys for a direct <b>Drag-and-Drop</b> workflow.</p>
+            
+            <h2>How to Upload</h2>
+            <p>To launch a new project on the edge, follow these steps:</p>
+            <div class="code-block">
+                1. Navigate to 'New Project' from your Dashboard.<br>
+                2. Select your local file (index.html, styles.css, etc).<br>
+                3. Drag it directly into the upload zone.<br>
+                4. Click [DEPLOY].
+            </div>
+            <p>Once deployed, your files are synced to our global S3 buckets and served via our Render edge network.</p>
+        </section>
+
+        <section id="update">
+            <h2>How to Update</h2>
+            <p>Updating your site is intelligent. The system detects updates based on <b>Filename Consistency</b>. You don't need to delete your old project to make a change.</p>
+            
+            <div class="WarnAlert">
+                <strong>Sync Rule:</strong> To update an existing file, drag in a new file with the <b>exact same name</b> as the hosted one.
+            </div>
+            
+            <p>Steps to update:</p>
+            <ul>
+                <li>Modify your file locally (e.g., change text in <b>index.html</b>).</li>
+                <li>Drag the updated <b>index.html</b> into the project dashboard.</li>
+                <li>The system identifies the matching name and <b>overwrites</b> the old data in the Supabase bucket.</li>
+                <li>Click Deploy to purge the edge cache.</li>
+            </ul>
+        </section>
+
+        <section id="routing">
+            <h2>Routing & URLs</h2>
+            <p>Every project is assigned a predictable, professional URL structure. This allows you to link assets between projects easily.</p>
+            <div class="code-block">
+                https://wolfcloud.onrender.com/:user/:repo
+            </div>
+            <p>Replace <b>:user</b> with your unique WolfVox username and <b>:repo</b> with the name you gave your project during deployment.</p>
+        </section>
+
+        <section id="persistence">
+            <h2>Data Persistence</h2>
+            <p>Unlike the WolfVox Forms platform (which clears data every 24 hours), <b>WolfVox Cloud</b> is designed for permanence. </p>
+            <div class="alert">
+                <strong>Supabase Storage:</strong> All files uploaded to Cloud Hosting are stored in persistent S3-compatible buckets. Your site will remain online until you manually delete it or violate community terms.
+            </div>
+        </section>
+
+        <section id="bans">
+            <h2>Policy Enforcement</h2>
+            <p>WolfVox maintains a professional environment. We utilize automated scanning for hosted content.</p>
+            <ul>
+                <li><b>No Malware:</b> Hosting malicious scripts results in an instant hardware ban.</li>
+                <li><b>No Phishing:</b> Attempting to clone login pages will result in immediate repo deletion.</li>
+                <li><b>Verification:</b> High-traffic repos may require a one-time Human Verification check.</li>
+            </ul>
+        </section>
+
+    </div>
+</div>
+
+<script>
+    // Handle Sidebar Active State on Scroll
+    const sections = document.querySelectorAll("section");
+    const navLinks = document.querySelectorAll(".side-link");
+    const contentArea = document.querySelector(".content");
+
+    contentArea.addEventListener("scroll", () => {
+        let current = "";
+        sections.forEach((section) => {
+            const sectionTop = section.offsetTop;
+            if (contentArea.scrollTop >= sectionTop - 100) {
+                current = section.getAttribute("id");
+            }
+        });
+
+        navLinks.forEach((link) => {
+            link.classList.remove("active");
+            if (link.getAttribute("href").includes(current)) {
+                link.classList.add("active");
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
