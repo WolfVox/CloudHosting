@@ -4,136 +4,255 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WolfVox | Cloud Hosting</title>
-        <link rel="icon" type="image/x-icon" href="https://github.com/WolfVox/wolfvox.github.io/blob/main/WolfVoxLogo.png?raw=true">
+    <link rel="icon" type="image/x-icon" href="https://github.com/WolfVox/wolfvox.github.io/blob/main/WolfVoxLogo.png?raw=true">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #000000; color: #ffffff; }
-        .glass-card { 
-            background: rgba(255, 255, 255, 0.03); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            transition: border 0.3s ease;
+        :root {
+            --bg: #030303;
+            --card-bg: #0a0a0a;
+            --border: rgba(255, 255, 255, 0.08);
+            --render-purple: #9333ea;
         }
-        .glass-card:hover { border: 1px solid rgba(255, 255, 255, 0.3); }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: #ffffff; scroll-behavior: smooth; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        .glass-card { 
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover { border: 1px solid rgba(255, 255, 255, 0.2); }
+
         .gradient-text {
-            background: linear-gradient(to right, #ffffff, #a1a1a1);
+            background: linear-gradient(180deg, #fff 0%, #a1a1a1 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+
+        .btn-primary {
+            position: relative; background: #fff; color: #000; overflow: hidden; z-index: 1; transition: color 0.4s;
+        }
+        .btn-primary:hover { color: #fff; }
+        .btn-primary::before {
+            content: ""; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: #000; z-index: -1; transition: transform 0.4s cubic-bezier(0.7, 0, 0.2, 1);
+        }
+        .btn-primary:hover::before { transform: translateX(100%); }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0px rgba(34, 197, 94, 0.4); }
+            100% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+        }
+        .pulse { animation: pulse-green 2s infinite; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body class="antialiased">
 
-    <nav class="flex items-center justify-between px-8 py-4 border-b border-white/10 sticky top-0 bg-black/50 backdrop-blur-md z-50">
-        <div class="flex items-center gap-8">
-            <h1 class="text-xl font-bold tracking-tighter cursor-pointer" onclick="location.href='/'">WOLF<span class="text-gray-500">VOX</span></h1>
-            
-            <div class="hidden md:flex gap-6 text-sm text-gray-400">
-                <a href="#" class="hover:text-white transition">Features</a>
+    <nav class="flex items-center justify-between px-6 py-3 border-b border-white/5 sticky top-0 bg-black/80 backdrop-blur-xl z-[100]">
+        <div class="flex items-center gap-10">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="location.href='/'">
+                <img src="https://github.com/WolfVox/wolfvox.github.io/blob/main/WolfVoxLogo.png?raw=true" class="w-7 h-7" alt="Logo">
+                <h1 class="text-lg font-bold tracking-tighter uppercase">Wolf<span class="text-zinc-500">Vox</span></h1>
+            </div>
+            <div class="hidden lg:flex gap-6 text-[13px] font-medium text-zinc-400">
+                <a href="#" class="hover:text-white transition">Dashboard</a>
                 <a href="#" class="hover:text-white transition">Docs</a>
                 <a href="#" class="hover:text-white transition">Pricing</a>
             </div>
-            
         </div>
         <div class="flex items-center gap-4">
-            <button id="signin-btn" class="text-sm text-gray-400 hover:text-white">Sign In</button>
-            <button id="nav-get-started" class="bg-white text-black px-4 py-1.5 rounded-full text-sm font-medium hover:bg-gray-200 transition">
-                Get Started
-            </button>
+            <button id="signin-btn" class="text-[13px] font-medium text-zinc-400 hover:text-white transition">Sign In</button>
+            <button id="nav-get-started" class="btn-primary px-5 py-1.5 rounded-full text-[13px] font-bold border border-white">Get Started</button>
         </div>
     </nav>
 
-    <main class="max-w-6xl mx-auto px-6 pt-24 pb-12">
-        <div class="text-center mb-20">
-            <span class="px-3 py-1 rounded-full border border-white/20 text-[10px] uppercase tracking-widest text-gray-400">
-                v1.0 is now live
-            </span>
-            <h2 class="text-5xl md:text-7xl font-semibold mt-6 mb-6 gradient-text tracking-tight">
+    <main class="max-w-7xl mx-auto px-6 pt-20">
+        
+        <div class="text-center mb-16">
+            <h2 id="hero-title" class="text-5xl md:text-7xl font-bold mb-6 gradient-text tracking-tighter">
                 Deploy in seconds. <br>Persistent by default.
             </h2>
-            <p class="text-gray-400 text-lg max-w-2xl mx-auto mb-10">
-                The developer-first cloud for static and dynamic sites. Powered by Supabase to ensure your data never vanishes, even on free tiers.
+            <p class="text-zinc-400 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
+                The developer-first cloud for static and dynamic sites. Powered by Supabase to ensure your data never vanishes.
             </p>
             <div class="flex justify-center gap-4">
-                <button id="start-btn" class="bg-white text-black px-8 py-3 rounded-md font-medium hover:invert transition">
+                <button id="start-btn" class="btn-primary px-8 py-3 rounded-md font-bold text-sm border border-white">
                     New Project
-                </button>
-                <button class="bg-transparent border border-white/20 px-8 py-3 rounded-md font-medium hover:bg-white/5 transition">
-                    Read the Docs
                 </button>
             </div>
         </div>
 
-        <section class="grid md:grid-cols-3 gap-6">
-            <div class="glass-card p-6 rounded-xl col-span-2">
-                <h3 class="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wider">Dynamic Routing</h3>
-                <div class="bg-black border border-white/10 p-4 rounded-lg font-mono text-sm">
-                    <span class="text-blue-400">https://</span>wolfcloud.onrender.com/<span class="text-green-400">:username</span>/<span class="text-purple-400">:repo</span>
+        <!-- URL SHOWCASE -->
+        <div class="glass-card mb-12 rounded-2xl overflow-hidden border-purple-500/20 bg-gradient-to-b from-purple-500/5 to-transparent">
+            <div class="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Global Edge Route</span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 pulse"></span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Dynamic Routing</h3>
+                    <p class="text-zinc-500 text-sm">Traffic is routed via Render proxy to Supabase-stored assets.</p>
                 </div>
-                <p class="mt-4 text-xs text-gray-500">WolfVox automatically routes traffic to your Supabase-stored assets based on the URL structure.</p>
+                
+                <div class="flex flex-col items-end gap-3 w-full md:w-auto">
+                    <div class="group relative flex items-center bg-black border border-white/10 rounded-lg p-1 pl-4 w-full md:w-[450px]">
+                        <code class="mono text-[13px] text-zinc-300 truncate">
+                            <span class="text-purple-500">https://</span>wolfcloud.onrender.com/<span class="text-white">:user</span>/<span class="text-white">:repo</span>
+                        </code>
+                        <button onclick="copyUrl()" class="ml-auto bg-zinc-900 hover:bg-zinc-800 text-zinc-400 p-2.5 rounded-md transition border border-white/5">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-6 mb-24">
+            <!-- INFRASTRUCTURE -->
+            <div class="glass-card p-8 rounded-2xl">
+                <h3 class="text-[11px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-6">Status</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-zinc-400">Database</span>
+                        <span class="text-green-500 mono text-[10px]">CONNECTED</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-zinc-400">S3 Bucket</span>
+                        <span class="text-green-500 mono text-[10px]">ACTIVE</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-zinc-400">Render Proxy</span>
+                        <span class="text-yellow-500 mono text-[10px]">POLLING</span>
+                    </div>
+                </div>
             </div>
 
-            <div class="glass-card p-6 rounded-xl">
-                <h3 class="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wider">Infrastructure</h3>
-                <ul class="space-y-3">
-                    <li class="flex items-center gap-2 text-sm text-gray-400">
-                        <div class="w-2 h-2 rounded-full bg-green-500"></div> Supabase Database Connected
-                    </li>
-                    <li class="flex items-center gap-2 text-sm text-gray-400">
-                        <div class="w-2 h-2 rounded-full bg-green-500"></div> S3 Asset Bucket Ready
-                    </li>
-                    <li class="flex items-center gap-2 text-sm text-gray-400">
-                        <div class="w-2 h-2 rounded-full bg-yellow-500"></div> Render Proxy Active
-                    </li>
-                </ul>
+            <!-- SHARP HEARTBEAT GRAPH -->
+            <div class="lg:col-span-2 glass-card p-8 rounded-2xl">
+                <div class="flex justify-between items-center mb-4">
+                   <h3 class="text-[11px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Network Heartbeat</h3>
+                   <span class="text-[10px] mono text-purple-400">Live Traffic</span>
+                </div>
+                <div class="h-[200px] w-full">
+                    <canvas id="heartbeatChart"></canvas>
+                </div>
             </div>
-        </section>
+
+            <!-- LOGS -->
+            <div class="lg:col-span-3 glass-card bg-black rounded-2xl overflow-hidden">
+                <div class="px-6 py-3 border-b border-white/5 bg-zinc-900/30 flex justify-between">
+                    <span class="text-[10px] mono text-zinc-500 uppercase">Deployment Logs</span>
+                    <span id="log-status" class="text-[10px] mono text-green-500 animate-pulse">SYNCING...</span>
+                </div>
+                <div class="p-6 h-40 overflow-y-auto mono text-[12px] custom-scrollbar text-zinc-600" id="logs">
+                    <div>[SYSTEM] Initializing WolfCloud Engine...</div>
+                    <div class="text-zinc-400">[AUTH] Checking local session tokens...</div>
+                </div>
+            </div>
+        </div>
     </main>
 
-    <footer class="mt-32 border-t border-white/5 py-12 text-center">
-        <p class="text-xs text-gray-600">© 2026 WolfVox. Built for the modern web.</p>
+    <footer class="border-t border-white/5 py-12 text-center">
+        <p class="text-zinc-700 text-[11px] uppercase tracking-widest">© 2026 WolfVox • Built for the modern web</p>
     </footer>
 
-<script>
-    // Constants for your routing
-    const SIGNIN_PATH = 'https://wolfvox.github.io/signin';
-    const CONSOLE_PATH = 'https://wolfvox.github.io/CloudHosting/create.html';
+    <script>
+        /* AUTH LOGIC FROM PREVIOUS VERSION */
+        const SIGNIN_PATH = 'https://wolfvox.github.io/signin';
+        const CONSOLE_PATH = 'https://wolfvox.github.io/CloudHosting/create.html';
 
-    // Core logic to check login status and navigate
-    function handleNavigation() {
-        const user = localStorage.getItem('wv_user');
-        
-        if (user) {
-            // If logged in, go directly to the console/dashboard
-            window.location.href = CONSOLE_PATH;
-        } else {
-            // If not logged in, go to the signin page
-            window.location.href = SIGNIN_PATH;
-        }
-    }
-
-    // Set up click listeners
-    document.getElementById('start-btn').addEventListener('click', handleNavigation);
-    document.getElementById('nav-get-started').addEventListener('click', handleNavigation);
-    
-    // Sign In button also checks state: if logged in, it acts as an "Account" shortcut
-    document.getElementById('signin-btn').addEventListener('click', handleNavigation);
-
-    // Initial load check to update UI based on login status
-    window.addEventListener('load', () => {
-        const userStr = localStorage.getItem('wv_user');
-        if (userStr) {
-            try {
-                const user = JSON.parse(userStr);
-                // Update button text to show user is recognized
-                document.getElementById('signin-btn').innerText = "Account";
-                document.getElementById('nav-get-started').innerText = "Dashboard";
-                document.getElementById('start-btn').innerText = "Open Console";
-            } catch (e) {
-                console.error("Error parsing user data", e);
+        function handleNavigation() {
+            const user = localStorage.getItem('wv_user');
+            if (user) {
+                window.location.href = CONSOLE_PATH;
+            } else {
+                window.location.href = SIGNIN_PATH;
             }
         }
-    });
-</script>
+
+        // Apply listeners
+        document.getElementById('start-btn').addEventListener('click', handleNavigation);
+        document.getElementById('nav-get-started').addEventListener('click', handleNavigation);
+        document.getElementById('signin-btn').addEventListener('click', handleNavigation);
+
+        // UI State check
+        window.addEventListener('load', () => {
+            const userStr = localStorage.getItem('wv_user');
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    document.getElementById('signin-btn').innerText = "Account";
+                    document.getElementById('nav-get-started').innerText = "Dashboard";
+                    document.getElementById('start-btn').innerText = "Open Console";
+                    addLog(`[USER] Welcome back, ${user.name || 'Developer'}`);
+                } catch (e) { console.error("Session Error", e); }
+            }
+        });
+
+        /* SHARP HEARTBEAT GRAPH */
+        const ctx = document.getElementById('heartbeatChart').getContext('2d');
+        const heartbeatChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array(20).fill(''),
+                datasets: [{
+                    data: [10, 10, 50, 10, 10, 10, 80, 10, 10, 40, 10, 10, 10, 90, 10, 10, 30, 10, 10, 10],
+                    borderColor: '#9333ea',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0, // 0 = PERFECTLY SHARP LINES (Heartbeat style)
+                    stepped: false // Set to true if you want actual square steps
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 0 }, // Instant updates
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: { display: false, min: 0, max: 100 }
+                }
+            }
+        });
+
+        // Live Heartbeat Animation
+        setInterval(() => {
+            heartbeatChart.data.datasets[0].data.shift();
+            // Random peaks to simulate heartbeat pulses
+            const rand = Math.random();
+            let newVal = 10;
+            if (rand > 0.8) newVal = Math.floor(Math.random() * 90) + 10;
+            heartbeatChart.data.datasets[0].data.push(newVal);
+            heartbeatChart.update();
+        }, 150);
+
+        /* UTILITIES */
+        function copyUrl() {
+            navigator.clipboard.writeText("https://wolfcloud.onrender.com/:user/:repo");
+            alert("Pattern copied to clipboard");
+        }
+
+        function addLog(msg) {
+            const logContainer = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logContainer.appendChild(div);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        setInterval(() => {
+            addLog(`→ Request routed to node-idx-${Math.floor(Math.random()*99)}`);
+        }, 6000);
+    </script>
 </body>
 </html>
