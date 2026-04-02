@@ -206,89 +206,119 @@ Scale instantly. ">
         </div>
     </footer>
 
-    <script>
-        /* AUTH LOGIC */
-        function checkAuth() {
-            const user = localStorage.getItem('wv_user');
-            const signinBtn = document.getElementById('signin-btn');
-            const startBtn = document.getElementById('start-btn');
+<script>
+    /* --- SHARED COOKIE UTILITIES --- */
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+        return null;
+    }
 
-            if (user) {
-                signinBtn.innerText = "Dashboard";
-                startBtn.innerText = "New Project";
+    /* AUTH LOGIC */
+    function checkAuth() {
+        // Retrieve user from Cookie instead of LocalStorage
+        const cookieData = getCookie('wv_user');
+        let user = null;
+        
+        if (cookieData) {
+            try {
+                user = JSON.parse(cookieData);
+            } catch (e) {
+                console.error("Auth parse error", e);
             }
         }
 
-        document.getElementById('start-btn').addEventListener('click', () => {
-            window.location.href = localStorage.getItem('wv_user') ? 
-                'https://wolfvox.github.io/CloudHosting/create.html' : 
-                'https://wolfvox.github.io/signin';
-        });
+        const signinBtn = document.getElementById('signin-btn');
+        const startBtn = document.getElementById('start-btn');
 
-        document.getElementById('signin-btn').addEventListener('click', () => {
-            window.location.href = localStorage.getItem('wv_user') ? 
-                'https://wolfvox.github.io/CloudHosting/create.html' : 
-                'https://wolfvox.github.io/signin';
-        });
-
-        window.onload = checkAuth;
-
-        /* HEARTBEAT CHART */
-        const ctx = document.getElementById('heartbeatChart').getContext('2d');
-        const heartbeatChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: Array(25).fill(''),
-                datasets: [{
-                    data: Array(25).fill(10),
-                    borderColor: '#9333ea',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    tension: 0,
-                    fill: false
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: { duration: 0 },
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { display: false },
-                    y: { display: false, min: 0, max: 100 }
-                }
-            }
-        });
-
-        setInterval(() => {
-            heartbeatChart.data.datasets[0].data.shift();
-            let newVal = Math.random() > 0.85 ? Math.floor(Math.random() * 80) + 15 : 10;
-            heartbeatChart.data.datasets[0].data.push(newVal);
-            heartbeatChart.update();
-        }, 150);
-
-        /* TERMINAL LOGS */
-        const logs = document.getElementById('logs');
-        function addLog() {
-            const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
-            const msgs = [
-                `[${time}] → GET /api/v1/assets 200 OK`,
-                `[${time}] ⚡ Scaling cluster-west-1...`,
-                `[${time}] → Background sync with Supabase...`,
-                `[${time}] → Static generation complete (104ms)`
-            ];
-            const div = document.createElement('div');
-            div.innerText = msgs[Math.floor(Math.random() * msgs.length)];
-            logs.appendChild(div);
-            if (logs.children.length > 15) logs.removeChild(logs.firstChild);
-            logs.scrollTop = logs.scrollHeight;
+        if (user && signinBtn && startBtn) {
+            signinBtn.innerText = "Dashboard";
+            startBtn.innerText = "New Project";
+            
+            // Optional: Update UI to show user is active
+            console.log(`Cloud Hosting active for: ${user.email}`);
         }
+        
+        return user;
+    }
+
+    // Redirect logic helper
+    function handleAuthAction() {
+        const user = getCookie('wv_user');
+        if (user) {
+            window.location.href = 'https://wolfvox.github.io/CloudHosting/create.html';
+        } else {
+            window.location.href = 'https://wolfvox.github.io/signin';
+        }
+    }
+
+    document.getElementById('start-btn').addEventListener('click', handleAuthAction);
+    document.getElementById('signin-btn').addEventListener('click', handleAuthAction);
+
+    window.onload = () => {
+        checkAuth();
+        // Initialize intervals for the dashboard vibe
         setInterval(addLog, 4000);
+        setInterval(updateChart, 150);
+    };
 
-        function copyUrl() {
-            navigator.clipboard.writeText("https://wolfcloud.onrender.com/:user/:repo");
-            alert("Pattern copied to clipboard");
+    /* HEARTBEAT CHART */
+    const ctx = document.getElementById('heartbeatChart').getContext('2d');
+    const heartbeatChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Array(25).fill(''),
+            datasets: [{
+                data: Array(25).fill(10),
+                borderColor: '#9333ea',
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 0 },
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { display: false },
+                y: { display: false, min: 0, max: 100 }
+            }
         }
-    </script>
+    });
+
+    function updateChart() {
+        heartbeatChart.data.datasets[0].data.shift();
+        let newVal = Math.random() > 0.85 ? Math.floor(Math.random() * 80) + 15 : 10;
+        heartbeatChart.data.datasets[0].data.push(newVal);
+        heartbeatChart.update();
+    }
+
+    /* TERMINAL LOGS */
+    const logs = document.getElementById('logs');
+    function addLog() {
+        if(!logs) return;
+        const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+        const msgs = [
+            `[${time}] → GET /api/v1/assets 200 OK`,
+            `[${time}] ⚡ Scaling cluster-west-1...`,
+            `[${time}] → Background sync with Supabase...`,
+            `[${time}] → Static generation complete (104ms)`
+        ];
+        const div = document.createElement('div');
+        div.innerText = msgs[Math.floor(Math.random() * msgs.length)];
+        logs.appendChild(div);
+        if (logs.children.length > 15) logs.removeChild(logs.firstChild);
+        logs.scrollTop = logs.scrollHeight;
+    }
+
+    function copyUrl() {
+        navigator.clipboard.writeText("https://wolfcloud.onrender.com/:user/:repo");
+        alert("Pattern copied to clipboard");
+    }
+</script>
 </body>
 </html>
