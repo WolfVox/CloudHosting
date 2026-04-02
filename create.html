@@ -254,10 +254,22 @@
         }
     }
 
-    function logout() {
-        eraseCookie('wv_user');
-        window.location.href = 'https://login.wolfvox.me';
-    }
+function logout() {
+    // 1. Define the cookie name
+    const name = 'wv_user';
+    
+    // 2. Clear for the root domain (covers all subdomains)
+    document.cookie = name + '=; Max-Age=-99999999; path=/; domain=.wolfvox.me; SameSite=Lax';
+    
+    // 3. Clear for the current specific subdomain (just in case)
+    document.cookie = name + '=; Max-Age=-99999999; path=/;';
+    
+    // 4. Clear localStorage as a fallback
+    localStorage.removeItem(name);
+    
+    // 5. Redirect to login
+    window.location.href = 'https://login.wolfvox.me';
+}
 
     function prepUpdate(slug) {
         document.getElementById('proj-name').value = slug;
