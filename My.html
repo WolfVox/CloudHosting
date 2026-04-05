@@ -3,476 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WolfVox | HIGH CONTRAST EXPLORER</title>
-    
+    <title>WolfVox | Explorer Pro</title>
     <style>
-        /* --- RESET & BASICS --- */
+        /* --- HIGH CONTRAST DARK THEME --- */
+        :root {
+            --bg: #000000;
+            --surface: #111111;
+            --border: #333333;
+            --text: #FFFFFF;
+            --text-muted: #888888;
+            --accent: #CC99FF; /* Purple */
+            --link: #88CCFF;   /* Blue */
+            --danger: #FF6666; /* Red */
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: #000000; /* PURE BLACK */
-            color: #FFFFFF; /* PURE WHITE */
-            line-height: 1.5;
-            overflow-x: hidden;
+            font-family: 'Inter', -apple-system, sans-serif; 
+            background: var(--bg); color: var(--text); 
+            line-height: 1.6;
         }
-        a { color: #88CCFF; text-decoration: none; transition: color 0.1s; }
-        a:hover { color: #FFFFFF; text-decoration: underline; }
-        button { cursor: pointer; background: none; border: none; color: inherit; font-family: inherit; }
-
-        /* --- LAYOUT --- */
-        .app-container { display: flex; flex-direction: column; min-height: 100vh; }
-        .main-content { display: flex; flex: 1; }
         
-        /* --- UTILITIES --- */
-        .mono { font-family: "JetBrains Mono", "Courier New", monospace; font-size: 13px; }
-        .text-muted { color: #AAAAAA; }
-        .text-white { color: #FFFFFF; }
-        .text-accent { color: #CC99FF; } /* VIVID PURPLE */
+        .mono { font-family: "JetBrains Mono", monospace; font-size: 13px; }
         .hidden { display: none !important; }
 
         /* --- HEADER --- */
         header { 
-            display: flex; align-items: center; justify-content: space-between; 
-            padding: 12px 24px; 
-            background-color: #000000; 
-            border-bottom: 2px solid #333333; /* HIGH CONTRAST BORDER */
+            padding: 15px 25px; background: var(--bg); 
+            border-bottom: 2px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
             position: sticky; top: 0; z-index: 100;
         }
-        .logo { font-size: 20px; font-weight: 800; tracking: -1px; }
-        .logo-sub { color: #666666; }
-        .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+        .logo { font-weight: 800; font-size: 20px; letter-spacing: -1px; cursor: pointer; }
+        .logo span { color: var(--text-muted); }
+        .user-badge { font-size: 12px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 20px; }
+
+        /* --- LAYOUT --- */
+        .container { display: flex; min-height: calc(100vh - 60px); }
         
-        /* --- SIDEBAR --- */
-        .sidebar { 
-            width: 260px; 
-            padding: 24px; 
-            background-color: #000000; 
-            border-right: 2px solid #333333; 
+        /* Sidebar */
+        aside { 
+            width: 260px; border-right: 2px solid var(--border); 
+            padding: 20px; background: var(--bg);
         }
-        .sidebar-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #888888; margin-bottom: 16px; }
-        .repo-link { 
-            display: block; padding: 8px 12px; 
-            font-size: 14px; border-radius: 6px; 
-            color: #BBBBBB; 
-            margin-bottom: 4px;
+        .sidebar-label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 15px; display: block; }
+        .nav-item { 
+            display: block; padding: 10px; color: var(--text-muted); 
+            text-decoration: none; border-radius: 6px; margin-bottom: 5px;
+            transition: 0.2s;
         }
-        .repo-link:hover { background-color: #222222; color: #FFFFFF; text-decoration: none; }
-        .repo-link.active { background-color: #CC99FF; color: #000000; font-weight: 700; } /* HIGH CONTRAST ACTIVE STATE */
+        .nav-item:hover { background: var(--surface); color: var(--text); }
+        .nav-item.active { background: var(--accent); color: var(--bg); font-weight: 700; }
 
-        /* --- MAIN EXPLORER AREA --- */
-        .explorer-area { flex: 1; padding: 32px; background-color: #000000; }
-        .explorer-area-inner { max-w: 1012px; margin: 0 auto; }
-
-        /* --- CARDS (Repo & Code Viewers) --- */
-        .hv-card { 
-            background-color: #000000; 
-            border: 2px solid #333333; 
-            border-radius: 8px; 
-            overflow: hidden; 
-            margin-bottom: 24px; 
-        }
+        /* Main View */
+        main { flex: 1; padding: 40px; }
+        .card { border: 2px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg); }
         .card-header { 
-            display: flex; align-items: center; justify-content: space-between; 
-            padding: 12px 16px; 
-            background-color: #111111; 
-            border-bottom: 2px solid #333333; 
-            font-size: 14px; 
+            background: var(--surface); padding: 12px 20px; 
+            border-bottom: 2px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .card-title { font-weight: 700; }
 
-        /* --- FILE LIST --- */
-        .file-list { display: flex; flex-direction: column; }
-        .file-item { 
-            display: flex; align-items: center; justify-content: space-between; 
-            padding: 12px 16px; 
-            border-bottom: 1px solid #222222; 
-            transition: background-color 0.1s; 
-            cursor: pointer;
+        /* File List */
+        .file-row { 
+            display: flex; justify-content: space-between; padding: 12px 20px;
+            border-bottom: 1px solid var(--border); cursor: pointer;
         }
-        .file-item:last-child { border-bottom: none; }
-        .file-item:hover { background-color: #111111; }
+        .file-row:hover { background: var(--surface); }
+        .file-name { display: flex; align-items: center; gap: 10px; }
+        .icon { width: 16px; text-align: center; font-weight: bold; }
         
-        .file-info { display: flex; align-items: center; gap: 12px; font-size: 14px; }
-        .file-icon { font-size: 16px; width: 20px; text-align: center; }
-        .icon-folder { color: #88CCFF; } /* HIGH CONTRAST BLUE */
-        .icon-file { color: #AAAAAA; }
-
-        .file-actions { display: flex; items-center: center; gap: 16px; font-size: 12px; }
-        .btn-live { border: 1px solid #88CCFF; color: #88CCFF; padding: 3px 8px; border-radius: 4px; }
-        .btn-live:hover { background-color: #88CCFF; color: #000000; text-decoration: none; }
-
-        /* --- CODE VIEWER --- */
-        .code-viewer-container { position: relative; }
-        .btn-close-code { color: #FF6666; font-size: 12px; font-weight: 700; }
-        .btn-close-code:hover { color: #FFFFFF; text-decoration: underline; }
+        /* Code Viewer */
+        .code-wrap { position: relative; }
+        pre { padding: 25px; overflow-x: auto; margin: 0; background: #050505; }
+        code { color: var(--text); tab-size: 4; }
         
-        /* High Contrast Prism-like Code Styling */
-        pre { 
-            margin: 0; padding: 24px; 
-            background-color: #000000; 
-            overflow-x: auto; 
-            color: #FFFFFF; 
-        }
-        code { font-family: "JetBrains Mono", monospace; font-size: 13px; tab-size: 4; }
-
-        /* Manual High Contrast Token Colors (Since we aren't linking Prism.css) */
-        .token.comment { color: #777777; }
-        .token.string { color: #AAFF88; } /* Vivid Green */
-        .token.keyword { color: #CC99FF; font-weight: bold; } /* Vivid Purple */
-        .token.function { color: #88CCFF; } /* Vivid Blue */
-        .token.number { color: #FFCC88; } /* Vivid Orange */
-        .token.operator { color: #FFFFFF; }
-        .token.class-name { color: #FFFF88; } /* Vivid Yellow */
-        
-        /* Font Awesome Replacement (Embedded SVGs or Simpler Icons) */
-        /* Using simple CSS shapes/letters to avoid external FontAwesome link */
-        .icon-placeholder { display: inline-block; width: 16px; text-align: center; font-weight: bold; }
-
+        /* Buttons */
+        .btn { padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-block; }
+        .btn-blue { border: 1px solid var(--link); color: var(--link); }
+        .btn-blue:hover { background: var(--link); color: var(--bg); }
+        .btn-red { color: var(--danger); }
     </style>
 </head>
-<body class="antialiased">
+<body>
 
-    <div class="app-container">
-        <header>
-            <div class="breadcrumb">
-                <div class="logo" onclick="location.href='/'">WOLF<span class="logo-sub">VOX</span></div>
-                <span class="text-muted">/</span>
-                <span id="breadcrumb-user" class="text-accent">username</span>
-                <span class="text-muted">/</span>
-                <span id="breadcrumb-repo" class="text-white">repo</span>
-            </div>
-            <button onclick="refreshCache()" class="mono text-muted btn-live" style="font-size: 11px;">[ Clear Cache ]</button>
-        </header>
-
-        <div class="main-content">
-            <aside class="sidebar">
-                <h3 class="sidebar-title">Repositories</h3>
-                <div id="repo-list">
-                    <p class="text-muted mono" style="font-size: 12px;">Loading...</p>
-                </div>
-            </aside>
-
-            <main class="explorer-area">
-                <div class="explorer-area-inner">
-                    
-                    <div id="repo-browser-card" class="hv-card hidden">
-                        <div class="card-header">
-                            <div class="card-title mono">
-                                <span class="text-accent">main</span> / <span class="text-white">Root</span>
-                            </div>
-                            <span id="file-count" class="text-muted mono" style="font-size: 11px;">-- files</span>
-                        </div>
-
-                        <div id="file-explorer-list" class="file-list">
-                            </div>
-                    </div>
-
-                    <div id="no-repo-state" class="text-center hv-card" style="padding: 60px 20px;">
-                        <span class="icon-placeholder text-muted" style="font-size: 40px; margin-bottom: 20px;">←</span>
-                        <h2 class="text-white">Select a repository</h2>
-                        <p class="text-muted">Choose a project from the left sidebar to explore its files.</p>
-                    </div>
-
-                    <div id="code-container" class="hv-card hidden code-viewer-container">
-                        <div class="card-header">
-                            <span id="code-file-name" class="mono text-accent">file_name.ext</span>
-                            <button onclick="closeCode()" class="btn-close-code">[ CLOSE ]</button>
-                        </div>
-                        <pre><code id="code-viewer" class="mono"></code></pre>
-                    </div>
-
-                </div>
-            </main>
+    <header>
+        <div class="logo" onclick="location.href='/'">WOLF<span>VOX</span></div>
+        <div class="flex items-center gap-4">
+            <span id="display-user" class="user-badge mono">Detecting User...</span>
+            <button onclick="checkCookies()" class="btn btn-blue" style="margin-left:10px">Debug Cookies</button>
         </div>
+    </header>
+
+    <div class="container">
+        <aside>
+            <span class="sidebar-label">Your Projects</span>
+            <div id="repo-list">
+                <p class="mono" style="color:var(--text-muted)">Loading...</p>
+            </div>
+        </aside>
+
+        <main>
+            <div id="explorer-view">
+                <div class="card">
+                    <div class="card-header">
+                        <span id="path-display" class="mono text-accent">/root</span>
+                        <span id="file-count" class="mono" style="font-size:11px">0 items</span>
+                    </div>
+                    <div id="file-list">
+                        <div class="p-20 text-center" style="padding:40px">
+                            <p class="text-muted">Select a repository to view files.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="code-view" class="hidden">
+                <div class="card">
+                    <div class="card-header">
+                        <span id="current-file-name" class="mono text-accent">file.js</span>
+                        <button onclick="closeCode()" class="btn btn-red">[ CLOSE ]</button>
+                    </div>
+                    <div class="code-wrap">
+                        <pre><code id="code-output" class="mono"></code></pre>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-<script>
-/* --- MINIFIED SUPABASE SDK v2.39.7 (Anonimized for this file) --- */
-/* (Standard Supabase JS library would be pasted here. I have included a stub 
-   below that uses the standard fetch API to demonstrate the logic. For actual 
-   deployment, you MUST paste the full supabase-js library minified code here). */
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-// --- SUPABASE STUB FOR INLINE DEMO (Paste full SDK here instead) ---
-const supabase = {
-    createClient: (url, key) => ({
-        storage: {
-            from: (bucket) => ({
-                list: async (path) => {
-                    console.log(`STUB: Listing bucket '${bucket}', path '${path}'`);
-                    // Demonstrating a live fetch call to get actual list data if RLS allows anon read
+    <script>
+        // --- CONFIG ---
+        const SB_URL = "https://lqdrtozuoslhufhpqwae.supabase.co";
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZHJ0b3p1b3NsaHVmaHBxd2FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODU1MDgsImV4cCI6MjA4ODU2MTUwOH0.0WScKpedr7AB2O93bVmXXar5R8KcUPmHXyUSndIxF2o";
+        const RENDER_URL = "https://wolfcloud.onrender.com";
+
+        let sb;
+        let username = "guest";
+        let activeRepo = new URLSearchParams(window.location.search).get('repo');
+
+        // --- 1. ROBUST COOKIE PARSER ---
+        function fetchUserFromCookie() {
+            const name = "wv_user=";
+            // Decode for special characters like %7B (brackets)
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
+            
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i].trim();
+                if (c.indexOf(name) == 0) {
                     try {
-                        const response = await fetch(`${url}/storage/v1/object/list/public/${bucket}`, {
-                            method: 'POST',
-                            headers: { 'apikey': key, 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ prefix: path, limit: 100, offset: 0, sortBy: { column: 'name', order: 'asc' } })
-                        });
-                        return await response.json();
-                    } catch (e) { return { data: null, error: e }; }
+                        const jsonStr = c.substring(name.length, c.length);
+                        const user = JSON.parse(jsonStr);
+                        // Clean username for Supabase paths
+                        return user.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    } catch(e) {
+                        console.error("JSON Parse failed for cookie");
+                    }
                 }
-            })
-        }
-    })
-};
-/* --- END SUPABASE SDK STUB --- */
-
-
-/* --- WOLFVOX EXPLORER LOGIC --- */
-
-// --- CONFIG ---
-const SB_URL = "https://lqdrtozuoslhufhpqwae.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZHJ0b3p1b3NsaHVmaHBxd2FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODU1MDgsImV4cCI6MjA4ODU2MTUwOH0.0WScKpedr7AB2O93bVmXXar5R8KcUPmHXyUSndIxF2o";
-const RENDER_BASE_URL = "https://wolfcloud.onrender.com"; // Your backend
-
-// --- STATE ---
-let db; // Supabase Client
-let username = "guest";
-let activeRepo = new URLSearchParams(window.location.search).get('repo');
-
-// Simple Icon Map (replacing FontAwesome)
-const ICONS = {
-    folder: '<span class="icon-placeholder icon-folder">D</span>', // D for Directory
-    file: '<span class="icon-placeholder icon-file">F</span>',
-    branch: '<span class="icon-placeholder text-muted">B</span>'
-};
-
-// --- CACHE UTILITIES (LocalStorage) ---
-const cache = {
-    save: (key, data, ttl_kb = 30) => {
-        localStorage.setItem(`wv_cache_${username}_${key}`, JSON.stringify({
-            timestamp: Date.now(),
-            expires: Date.now() + (ttl_kb * 60 * 1000), // convert mins to ms
-            content: data
-        }));
-    },
-    get: (key) => {
-        const cached = localStorage.getItem(`wv_cache_${username}_${key}`);
-        if (!cached) return null;
-        const parsed = JSON.parse(cached);
-        if (Date.now() > parsed.expires) {
-            localStorage.removeItem(`wv_cache_${username}_${key}`);
-            return null;
-        }
-        return parsed.content;
-    },
-    clear: () => {
-        Object.keys(localStorage)
-            .filter(key => key.startsWith('wv_cache_'))
-            .forEach(key => localStorage.removeItem(key));
-    }
-};
-
-// --- INITIALIZATION ---
-async function init() {
-    console.log("WolfVox High Contrast Explorer Initializing...");
-
-    // 1. Get User from Cookie
-    const cookieData = document.cookie.split('; wv_user=')[1];
-    if (cookieData) {
-        try {
-            const userParams = JSON.parse(decodeURIComponent(cookieData));
-            username = userParams.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-        } catch (e) { console.error("Cookie parse error"); }
-    }
-    
-    // 2. Update UI Basics
-    document.getElementById('breadcrumb-user').innerText = username;
-    document.getElementById('breadcrumb-repo').innerText = activeRepo || "projects";
-
-    // 3. Init Supabase (Real init if SDK pasted, else stub uses fetch)
-    db = supabase.createClient(SB_URL, SB_KEY);
-
-    // 4. Run Core Logic
-    await loadRepoList();
-    if (activeRepo) {
-        loadFiles(activeRepo);
-    }
-}
-
-// --- CORE FUNCTIONS ---
-
-async function loadRepoList() {
-    const listContainer = document.getElementById('repo-list');
-    
-    // Try Cache First
-    const cachedRepos = cache.get('repos');
-    let reposData;
-
-    if (cachedRepos) {
-        reposData = cachedRepos;
-        console.log("Loaded repos from cache");
-    } else {
-        // Fetch from Supabase ('sites' bucket, root path is just the username)
-        // We assume RLS allows SELECT for public in 'sites' bucket.
-        const { data, error } = await db.storage.from('sites').list(username);
-        
-        if (error) {
-            console.error("Error listing repos:", error);
-            listContainer.innerHTML = '<p class="text-red-400 mono">Access Error</p>';
-            return;
-        }
-        reposData = data;
-        cache.save('repos', reposData);
-    }
-
-    if (!reposData || reposData.length === 0) {
-        listContainer.innerHTML = '<p class="text-muted mono" style="font-size:11px;">No projects found.</p>';
-        return;
-    }
-
-    // Render List
-    listContainer.innerHTML = reposData.map(repo => `
-        <a href="?repo=${repo.name}" class="repo-link mono ${activeRepo === repo.name ? 'active' : ''}">
-            ${ICONS.folder} ${repo.name}
-        </a>
-    `).join('');
-}
-
-async function loadFiles(repo) {
-    const listContainer = document.getElementById('file-explorer-list');
-    const browserCard = document.getElementById('repo-browser-card');
-    const noRepoState = document.getElementById('no-repo-state');
-    const fileCountSpan = document.getElementById('file-count');
-
-    // UI State Toggles
-    noRepoState.classList.add('hidden');
-    browserCard.classList.remove('hidden');
-    listContainer.innerHTML = '<div class="p-4 text-muted mono">Querying files...</div>';
-
-    // The Supabase path structure is username/repo_name/
-    const storagePath = `${username}/${repo}`;
-
-    const { data, error } = await db.storage.from('sites').list(storagePath);
-
-    if (error) {
-        console.error("File listing error:", error);
-        listContainer.innerHTML = `<div class="p-4 text-red-400 mono">Error: ${error.message}</div>`;
-        return;
-    }
-
-    if (!data || data.length === 0) {
-        listContainer.innerHTML = '<div class="p-4 text-muted mono">Repository is empty.</div>';
-        fileCountSpan.innerText = `0 files`;
-        return;
-    }
-
-    fileCountSpan.innerText = `${data.length} files`;
-
-    // Render Files
-    listContainer.innerHTML = data.map(file => {
-        // Simple folder detection: if metadata is null, it's usually a directory.
-        const isFolder = !file.metadata;
-        const fileName = file.name;
-        
-        // Final constructed Render URL: https://wolfcloud.onrender.com/:user/:repo/:path
-        const renderUrl = `${RENDER_BASE_URL}/${username}/${repo}/${fileName}`;
-
-        return `
-            <div class="file-item" ${isFolder ? '' : `onclick="fetchCodeFromRender('${repo}', '${fileName}')"`}>
-                <div class="file-info mono">
-                    ${isFolder ? ICONS.folder : ICONS.file}
-                    <span class="text-white">${fileName}</span>
-                </div>
-                <div class="file-actions mono">
-                    ${isFolder ? '' : `<a href="${renderUrl}" target="_blank" class="btn-live">View Live →</a>`}
-                    <span class="text-muted" style="width: 70px; text-align:right;">
-                        ${isFolder ? 'Folder' : formatBytes(file.metadata.size)}
-                    </span>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// Fired when a file is clicked: Fetches content through Render service
-async function fetchCodeFromRender(repo, fileName) {
-    const codeContainer = document.getElementById('code-container');
-    const codeViewer = document.getElementById('code-viewer');
-    const browserCard = document.getElementById('repo-browser-card');
-    const fileNameDisplay = document.getElementById('code-file-name');
-
-    // UI Toggles
-    browserCard.classList.add('hidden'); // Hide file list
-    codeContainer.classList.remove('hidden'); // Show viewer
-    fileNameDisplay.innerText = fileName;
-    codeViewer.innerText = "Requesting content from Render backend...";
-
-    // 1. Determine file extension for basic high-contrast highlighting
-    const ext = fileName.split('.').pop().toLowerCase();
-    let langClass = 'language-text';
-    if (ext === 'js') langClass = 'language-javascript';
-    else if (ext === 'html') langClass = 'language-html';
-    else if (ext === 'css') langClass = 'language-css';
-    
-    codeViewer.className = `mono ${langClass}`;
-
-    // 2. Construct the exact URL your server.js logic expects:
-    // https://wolfcloud.onrender.com/:repo/:path?user=:user (using query param as fallback for subdomains)
-    const targetUrl = `${RENDER_BASE_URL}/${repo}/${fileName}?user=${username}`;
-
-    try {
-        console.log(`Fetching code via Render: ${targetUrl}`);
-        const response = await fetch(targetUrl);
-        
-        if (!response.ok) {
-            throw new Error(`Render Service Error: ${response.status} ${response.statusText}`);
+            }
+            return "guest";
         }
 
-        const rawCode = await response.text();
-        
-        // 3. Apply basic high-contrast tokenization (Since Prism is not embedded)
-        // This is a very simple regex replace; for better highlighting, paste Prism.js at the top.
-        codeViewer.innerHTML = simpleHighlight(rawCode, ext);
+        // --- 2. INITIALIZATION ---
+        async function init() {
+            username = fetchUserFromCookie();
+            document.getElementById('display-user').innerText = `@${username}`;
 
-    } catch (err) {
-        console.error("Fetch Code Error:", err);
-        codeViewer.innerHTML = `<span class="text-red-400">Failed to fetch file content through Render. Ensure CORS is enabled on your backend.<br><br>Error: ${err.message}</span>`;
-    }
-}
+            if (username === "guest") {
+                alert("Login session not found. Redirecting...");
+                window.location.href = "https://login.wolfvox.me";
+                return;
+            }
 
-// --- HELPERS ---
+            // Init Supabase
+            sb = supabase.createClient(SB_URL, SB_KEY);
 
-function closeCode() {
-    document.getElementById('code-container').classList.add('hidden');
-    document.getElementById('repo-browser-card').classList.remove('hidden');
-}
+            await loadRepos();
+            if (activeRepo) {
+                document.getElementById('path-display').innerText = `/${activeRepo}`;
+                loadFiles(activeRepo);
+            }
+        }
 
-function refreshCache() {
-    cache.clear();
-    location.reload();
-}
+        // --- 3. REPO LISTING ---
+        async function loadRepos() {
+            const { data, error } = await sb.storage.from('sites').list(username);
+            const list = document.getElementById('repo-list');
 
-function formatBytes(bytes, decimals = 1) {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
+            if (error || !data) {
+                list.innerHTML = `<p class="mono" style="color:var(--danger)">Error: ${error?.message || 'Unauthorized'}</p>`;
+                return;
+            }
 
-// Minimalist fallback syntax highlighter (regex based)
-function simpleHighlight(code, ext) {
-    // Escaping HTML first
-    let escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    
-    if (ext === 'js' || ext === 'json') {
-        return escaped
-            .replace(/(\/\/.+)/g, '<span class="token comment">$1</span>') // Comments
-            .replace(/("(?:[^"\\]|\\.)*")/g, '<span class="token string">$1</span>') // Strings
-            .replace(/\b(const|let|var|function|return|if|else|for|await|async|import|export|from|class)\b/g, '<span class="token keyword">$1</span>')
-            .replace(/\b(\d+)\b/g, '<span class="token number">$1</span>');
-    } else if (ext === 'html') {
-        return escaped
-            .replace(/(&lt;!--.+--&gt;)/g, '<span class="token comment">$1</span>')
-            .replace(/(&lt;\/?[a-z0-9]+\b)/g, '<span class="token keyword">$1</span>') // Tags
-            .replace(/("[^"]*")/g, '<span class="token string">$1</span>'); // Attr values
-    }
-    return escaped; // Default (text)
-}
+            list.innerHTML = data.map(r => `
+                <a href="?repo=${r.name}" class="nav-item mono ${activeRepo === r.name ? 'active' : ''}">
+                    ⬚ ${r.name}
+                </a>
+            `).join('');
+        }
 
-// Run on load
-window.onload = init;
+        // --- 4. FILE LISTING ---
+        async function loadFiles(repo) {
+            const list = document.getElementById('file-list');
+            const { data, error } = await sb.storage.from('sites').list(`${username}/${repo}`);
 
-</script>
+            if (error) {
+                list.innerHTML = `<p class="p-20 mono">Error fetching files.</p>`;
+                return;
+            }
+
+            document.getElementById('file-count').innerText = `${data.length} items`;
+
+            list.innerHTML = data.map(file => {
+                const isFolder = !file.metadata;
+                const renderLink = `${RENDER_URL}/${username}/${repo}/${file.name}`;
+                
+                return `
+                    <div class="file-row" onclick="${isFolder ? '' : `viewCode('${repo}', '${file.name}')`}">
+                        <div class="file-name mono">
+                            <span class="icon" style="color:${isFolder ? 'var(--link)' : 'var(--text-muted)'}">${isFolder ? 'D' : 'F'}</span>
+                            ${file.name}
+                        </div>
+                        <div class="flex gap-4">
+                            ${isFolder ? '' : `<a href="${renderLink}" target="_blank" class="btn btn-blue" onclick="event.stopPropagation()">View Live</a>`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- 5. CODE FETCHING (VIA RENDER) ---
+        async function viewCode(repo, file) {
+            const output = document.getElementById('code-output');
+            document.getElementById('explorer-view').classList.add('hidden');
+            document.getElementById('code-view').classList.remove('hidden');
+            document.getElementById('current-file-name').innerText = file;
+            
+            output.innerText = "// Fetching content from Render...";
+
+            try {
+                // Fetch from your backend to bypass RLS and handle content-type
+                const response = await fetch(`${RENDER_URL}/${repo}/${file}?user=${username}`);
+                if (!response.ok) throw new Error("Failed to load file from Render service.");
+                
+                const text = await response.text();
+                output.innerText = text;
+            } catch (err) {
+                output.innerText = `Error: ${err.message}`;
+            }
+        }
+
+        function closeCode() {
+            document.getElementById('code-view').classList.add('hidden');
+            document.getElementById('explorer-view').classList.remove('hidden');
+        }
+
+        function checkCookies() {
+            alert("Raw Cookies:\n" + document.cookie);
+            console.log("Current Username:", username);
+        }
+
+        window.onload = init;
+    </script>
 </body>
 </html>
