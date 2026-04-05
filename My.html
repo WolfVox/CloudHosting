@@ -236,25 +236,29 @@
         }
 
         // --- 5. CODE FETCHING (VIA RENDER) ---
-        async function viewCode(repo, file) {
-            const output = document.getElementById('code-output');
-            document.getElementById('explorer-view').classList.add('hidden');
-            document.getElementById('code-view').classList.remove('hidden');
-            document.getElementById('current-file-name').innerText = file;
-            
-            output.innerText = "// Fetching content from Render...";
+async function viewCode(repo, file) {
+    const output = document.getElementById('code-output');
+    // ... UI toggles ...
 
-            try {
-                // Fetch from your backend to bypass RLS and handle content-type
-                const response = await fetch(`${RENDER_URL}/${repo}/${file}?user=${username}`);
-                if (!response.ok) throw new Error("Failed to load file from Render service.");
-                
-                const text = await response.text();
-                output.innerText = text;
-            } catch (err) {
-                output.innerText = `Error: ${err.message}`;
-            }
+    try {
+        // Construct the URL: BASE / USER / REPO / FILE
+        const targetUrl = `${RENDER_URL}/${username}/${repo}/${file}`;
+        
+        console.log("Requesting:", targetUrl); // Check this in your F12 console!
+
+        const response = await fetch(targetUrl);
+        
+        if (!response.ok) {
+            throw new Error(`Server said ${response.status}: ${response.statusText}`);
         }
+        
+        const text = await response.text();
+        output.innerText = text;
+    } catch (err) {
+        output.innerText = `Error: ${err.message}`;
+        console.error("Fetch failure:", err);
+    }
+}
 
         function closeCode() {
             document.getElementById('code-view').classList.add('hidden');
