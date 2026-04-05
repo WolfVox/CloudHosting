@@ -3,130 +3,238 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WolfVox | Explorer Pro</title>
+    <title>WOLFVOX | PRO REPO EXPLORER</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <style>
-        /* --- HIGH CONTRAST DARK THEME --- */
         :root {
             --bg: #000000;
-            --surface: #111111;
-            --border: #333333;
-            --text: #FFFFFF;
-            --text-muted: #888888;
-            --accent: #CC99FF; /* Purple */
-            --link: #88CCFF;   /* Blue */
-            --danger: #FF6666; /* Red */
+            --surface: #0a0a0a;
+            --surface-light: #161616;
+            --border: #262626;
+            --border-bright: #404040;
+            --text: #ffffff;
+            --text-dim: #888888;
+            --accent: #CC99FF;
+            --accent-dim: #7a5ba3;
+            --success: #00ff88;
+            --error: #ff4444;
+            --warning: #ffbb00;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
-            font-family: 'Inter', -apple-system, sans-serif; 
-            background: var(--bg); color: var(--text); 
-            line-height: 1.6;
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column;
+            overflow: hidden;
         }
-        
-        .mono { font-family: "JetBrains Mono", monospace; font-size: 13px; }
-        .hidden { display: none !important; }
 
-        /* --- HEADER --- */
-        header { 
-            padding: 15px 25px; background: var(--bg); 
+        /* --- TOP NAVIGATION --- */
+        nav {
+            height: 60px;
             border-bottom: 2px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+            background: var(--surface);
+            z-index: 10;
         }
-        .logo { font-weight: 800; font-size: 20px; letter-spacing: -1px; cursor: pointer; }
-        .logo span { color: var(--text-muted); }
-        .user-badge { font-size: 12px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 20px; }
-
-        /* --- LAYOUT --- */
-        .container { display: flex; min-height: calc(100vh - 60px); }
+        .brand { font-weight: 900; font-size: 22px; letter-spacing: -1px; cursor: pointer; }
+        .brand span { color: var(--accent); }
         
-        /* Sidebar */
-        aside { 
-            width: 260px; border-right: 2px solid var(--border); 
-            padding: 20px; background: var(--bg);
+        .session-info { display: flex; align-items: center; gap: 15px; }
+        .badge { 
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 4px 10px;
+            background: var(--surface-light);
+            border: 1px solid var(--border-bright);
+            border-radius: 4px;
+            color: var(--accent);
         }
-        .sidebar-label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 15px; display: block; }
-        .nav-item { 
-            display: block; padding: 10px; color: var(--text-muted); 
-            text-decoration: none; border-radius: 6px; margin-bottom: 5px;
+
+        /* --- MAIN LAYOUT --- */
+        .app-body { display: flex; flex: 1; overflow: hidden; }
+
+        /* Sidebar: Repository & File Tree */
+        aside {
+            width: 300px;
+            border-right: 2px solid var(--border);
+            background: var(--surface);
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-section { padding: 20px; border-bottom: 1px solid var(--border); }
+        .section-label { 
+            font-size: 10px; 
+            font-weight: 800; 
+            color: var(--text-dim); 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.2s;
+            color: var(--text-dim);
+            text-decoration: none;
+            margin-bottom: 2px;
+        }
+        .list-item:hover { background: var(--surface-light); color: var(--text); }
+        .list-item.active { background: var(--accent); color: var(--bg); font-weight: 700; }
+        .list-item i { width: 16px; text-align: center; font-style: normal; font-weight: bold; }
+
+        /* Main Workspace */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+            position: relative;
+        }
+
+        /* Editor Toolbar */
+        .editor-header {
+            height: 50px;
+            background: var(--surface-light);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+        .file-path { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); }
+
+        /* Code Display */
+        .code-container {
+            flex: 1;
+            overflow: auto;
+            background: #000;
+            padding: 30px;
+            position: relative;
+        }
+        pre { margin: 0; }
+        code { 
+            font-family: 'JetBrains Mono', monospace; 
+            font-size: 14px; 
+            line-height: 1.6; 
+            tab-size: 4;
+            white-space: pre;
+        }
+
+        /* --- DIAGNOSTIC CONSOLE --- */
+        #terminal {
+            height: 180px;
+            background: #050505;
+            border-top: 2px solid var(--border);
+            padding: 15px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #ccc;
+        }
+        .log-entry { margin-bottom: 4px; display: flex; gap: 10px; }
+        .log-ts { color: #555; }
+        .log-info { color: var(--accent); }
+        .log-err { color: var(--error); }
+        .log-ok { color: var(--success); }
+
+        /* Buttons */
+        .btn {
+            padding: 6px 14px;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid var(--border-bright);
+            background: transparent;
+            color: var(--text);
             transition: 0.2s;
         }
-        .nav-item:hover { background: var(--surface); color: var(--text); }
-        .nav-item.active { background: var(--accent); color: var(--bg); font-weight: 700; }
+        .btn:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-primary { background: var(--accent); color: var(--bg); border: none; }
+        .btn-primary:hover { opacity: 0.8; color: var(--bg); }
 
-        /* Main View */
-        main { flex: 1; padding: 40px; }
-        .card { border: 2px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg); }
-        .card-header { 
-            background: var(--surface); padding: 12px 20px; 
-            border-bottom: 2px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
-        /* File List */
-        .file-row { 
-            display: flex; justify-content: space-between; padding: 12px 20px;
-            border-bottom: 1px solid var(--border); cursor: pointer;
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-dim);
+            gap: 15px;
         }
-        .file-row:hover { background: var(--surface); }
-        .file-name { display: flex; align-items: center; gap: 10px; }
-        .icon { width: 16px; text-align: center; font-weight: bold; }
-        
-        /* Code Viewer */
-        .code-wrap { position: relative; }
-        pre { padding: 25px; overflow-x: auto; margin: 0; background: #050505; }
-        code { color: var(--text); tab-size: 4; }
-        
-        /* Buttons */
-        .btn { padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-block; }
-        .btn-blue { border: 1px solid var(--link); color: var(--link); }
-        .btn-blue:hover { background: var(--link); color: var(--bg); }
-        .btn-red { color: var(--danger); }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="logo" onclick="location.href='/'">WOLF<span>VOX</span></div>
-        <div class="flex items-center gap-4">
-            <span id="display-user" class="user-badge mono">Detecting User...</span>
-            <button onclick="checkCookies()" class="btn btn-blue" style="margin-left:10px">Debug Cookies</button>
+    <nav>
+        <div class="brand" onclick="location.href='/'">WOLF<span>VOX</span></div>
+        <div class="session-info">
+            <span class="badge" id="user-badge">DETECTING SESSION...</span>
+            <button class="btn" onclick="clearLocalCache()">PURGE CACHE</button>
         </div>
-    </header>
+    </nav>
 
-    <div class="container">
+    <div class="app-body">
         <aside>
-            <span class="sidebar-label">Your Projects</span>
-            <div id="repo-list">
-                <p class="mono" style="color:var(--text-muted)">Loading...</p>
+            <div class="sidebar-section">
+                <span class="section-label">Your Repositories</span>
+                <div id="repo-list-container">
+                    </div>
+            </div>
+            <div class="sidebar-section" style="flex:1; overflow-y:auto;">
+                <span class="section-label">File Explorer</span>
+                <div id="file-tree-container">
+                    <p style="font-size:12px; color:var(--text-dim); text-align:center;">Select a repo to explore</p>
+                </div>
             </div>
         </aside>
 
         <main>
-            <div id="explorer-view">
-                <div class="card">
-                    <div class="card-header">
-                        <span id="path-display" class="mono text-accent">/root</span>
-                        <span id="file-count" class="mono" style="font-size:11px">0 items</span>
+            <div id="editor-ui" class="hidden" style="height:100%; display:flex; flex-direction:column;">
+                <div class="editor-header">
+                    <div class="file-path" id="active-file-path">/root/index.html</div>
+                    <div style="display:flex; gap:10px;">
+                        <a id="live-preview-btn" target="_blank" class="btn btn-primary">VIEW LIVE SITE</a>
+                        <button class="btn" onclick="closeEditor()">CLOSE</button>
                     </div>
-                    <div id="file-list">
-                        <div class="p-20 text-center" style="padding:40px">
-                            <p class="text-muted">Select a repository to view files.</p>
-                        </div>
-                    </div>
+                </div>
+                <div class="code-container">
+                    <pre><code id="code-output"></code></pre>
                 </div>
             </div>
 
-            <div id="code-view" class="hidden">
-                <div class="card">
-                    <div class="card-header">
-                        <span id="current-file-name" class="mono text-accent">file.js</span>
-                        <button onclick="closeCode()" class="btn btn-red">[ CLOSE ]</button>
-                    </div>
-                    <div class="code-wrap">
-                        <pre><code id="code-output" class="mono"></code></pre>
-                    </div>
+            <div id="empty-ui" class="empty-state">
+                <div style="font-size: 40px;">📂</div>
+                <p>No file selected for editing.</p>
+                <p style="font-size: 11px;">Select a file from the sidebar to fetch from Render Service.</p>
+            </div>
+
+            <div id="terminal">
+                <div class="log-entry">
+                    <span class="log-ts">[SYSTEM]</span>
+                    <span class="log-info">Diagnostic Console Active. Ready for Fetch.</span>
                 </div>
             </div>
         </main>
@@ -135,141 +243,185 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
-        // --- CONFIG ---
+        // --- 1. CONFIGURATION ---
         const SB_URL = "https://lqdrtozuoslhufhpqwae.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZHJ0b3p1b3NsaHVmaHBxd2FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODU1MDgsImV4cCI6MjA4ODU2MTUwOH0.0WScKpedr7AB2O93bVmXXar5R8KcUPmHXyUSndIxF2o";
-        const RENDER_URL = "https://wolfcloud.onrender.com";
+        const RENDER_BASE = "https://wolfcloud.onrender.com";
 
         let sb;
-        let username = "guest";
+        let currentUser = "guest";
         let activeRepo = new URLSearchParams(window.location.search).get('repo');
 
-        // --- 1. ROBUST COOKIE PARSER ---
-        function fetchUserFromCookie() {
-            const name = "wv_user=";
-            // Decode for special characters like %7B (brackets)
-            const decodedCookie = decodeURIComponent(document.cookie);
-            const ca = decodedCookie.split(';');
+        // --- 2. CORE SYSTEM ---
+
+        function logger(msg, type = 'info') {
+            const term = document.getElementById('terminal');
+            const now = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
             
-            for(let i = 0; i < ca.length; i++) {
-                let c = ca[i].trim();
-                if (c.indexOf(name) == 0) {
-                    try {
-                        const jsonStr = c.substring(name.length, c.length);
-                        const user = JSON.parse(jsonStr);
-                        // Clean username for Supabase paths
-                        return user.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    } catch(e) {
-                        console.error("JSON Parse failed for cookie");
-                    }
-                }
-            }
-            return "guest";
+            let typeClass = 'log-info';
+            if(type === 'err') typeClass = 'log-err';
+            if(type === 'ok') typeClass = 'log-ok';
+
+            entry.innerHTML = `
+                <span class="log-ts">[${now}]</span>
+                <span class="${typeClass}">${msg}</span>
+            `;
+            term.appendChild(entry);
+            term.scrollTop = term.scrollHeight;
         }
 
-        // --- 2. INITIALIZATION ---
         async function init() {
-            username = fetchUserFromCookie();
-            document.getElementById('display-user').innerText = `@${username}`;
-
-            if (username === "guest") {
-                alert("Login session not found. Redirecting...");
-                window.location.href = "https://login.wolfvox.me";
-                return;
+            logger("Initializing WolfVox Explorer Kernel...");
+            
+            // Extract User Cookie
+            const cookies = document.cookie.split('; ');
+            const userCookie = cookies.find(row => row.startsWith('wv_user='));
+            
+            if (userCookie) {
+                try {
+                    const data = JSON.parse(decodeURIComponent(userCookie.split('=')[1]));
+                    currentUser = data.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    logger(`User session validated: ${currentUser}`, 'ok');
+                } catch(e) {
+                    logger("Cookie corruption detected.", "err");
+                }
+            } else {
+                logger("No active session. Browsing as Guest.", "warn");
             }
 
-            // Init Supabase
+            document.getElementById('user-badge').innerText = `@${currentUser.toUpperCase()}`;
+            
+            // Connect to Supabase
             sb = supabase.createClient(SB_URL, SB_KEY);
-
-            await loadRepos();
+            
+            await loadRepoSidebar();
+            
             if (activeRepo) {
-                document.getElementById('path-display').innerText = `/${activeRepo}`;
-                loadFiles(activeRepo);
+                logger(`Active Repo detected in URL: ${activeRepo}`);
+                await loadFileTree(activeRepo);
             }
         }
 
-        // --- 3. REPO LISTING ---
-        async function loadRepos() {
-            const { data, error } = await sb.storage.from('sites').list(username);
-            const list = document.getElementById('repo-list');
+        // --- 3. UI LOADING ---
 
-            if (error || !data) {
-                list.innerHTML = `<p class="mono" style="color:var(--danger)">Error: ${error?.message || 'Unauthorized'}</p>`;
+        async function loadRepoSidebar() {
+            logger("Querying repository list...");
+            const { data, error } = await sb.storage.from('sites').list(currentUser);
+            
+            if (error) {
+                logger(`Supabase Listing Error: ${error.message}`, "err");
                 return;
             }
 
-            list.innerHTML = data.map(r => `
-                <a href="?repo=${r.name}" class="nav-item mono ${activeRepo === r.name ? 'active' : ''}">
-                    ⬚ ${r.name}
+            const container = document.getElementById('repo-list-container');
+            container.innerHTML = data.map(repo => `
+                <a href="?repo=${repo.name}" class="list-item ${activeRepo === repo.name ? 'active' : ''}">
+                    <i>R</i> ${repo.name}
                 </a>
             `).join('');
         }
 
-        // --- 4. FILE LISTING ---
-        async function loadFiles(repo) {
-            const list = document.getElementById('file-list');
-            const { data, error } = await sb.storage.from('sites').list(`${username}/${repo}`);
+        async function loadFileTree(repo) {
+            logger(`Indexing files for repo: ${repo}...`);
+            const container = document.getElementById('file-tree-container');
+            
+            const { data, error } = await sb.storage.from('sites').list(`${currentUser}/${repo}`);
 
-            if (error) {
-                list.innerHTML = `<p class="p-20 mono">Error fetching files.</p>`;
+            if (error || !data) {
+                logger("Failed to retrieve file index.", "err");
+                container.innerHTML = `<p style="padding:20px; color:var(--error); font-size:12px;">Access Denied or Empty</p>`;
                 return;
             }
 
-            document.getElementById('file-count').innerText = `${data.length} items`;
-
-            list.innerHTML = data.map(file => {
+            container.innerHTML = data.map(file => {
                 const isFolder = !file.metadata;
-                const renderLink = `${RENDER_URL}/${username}/${repo}/${file.name}`;
-                
                 return `
-                    <div class="file-row" onclick="${isFolder ? '' : `viewCode('${repo}', '${file.name}')`}">
-                        <div class="file-name mono">
-                            <span class="icon" style="color:${isFolder ? 'var(--link)' : 'var(--text-muted)'}">${isFolder ? 'D' : 'F'}</span>
-                            ${file.name}
-                        </div>
-                        <div class="flex gap-4">
-                            ${isFolder ? '' : `<a href="${renderLink}" target="_blank" class="btn btn-blue" onclick="event.stopPropagation()">View Live</a>`}
-                        </div>
+                    <div class="list-item" onclick="${isFolder ? '' : `fetchFileContent('${repo}', '${file.name}')`}">
+                        <i style="color:${isFolder ? 'var(--accent)' : 'var(--text-dim)'}">${isFolder ? 'D' : 'F'}</i>
+                        ${file.name}
                     </div>
                 `;
             }).join('');
+            logger(`Successfully indexed ${data.length} items.`, "ok");
         }
 
-        // --- 5. CODE FETCHING (VIA RENDER) ---
-async function viewCode(repo, file) {
-    const output = document.getElementById('code-output');
-    // ... UI toggles ...
+        // --- 4. THE FETCH KERNEL (THE BIG LOGIC) ---
 
-    try {
-        // Construct the URL: BASE / USER / REPO / FILE
-        const targetUrl = `${RENDER_URL}/${username}/${repo}/${file}`;
-        
-        console.log("Requesting:", targetUrl); // Check this in your F12 console!
+        async function fetchFileContent(repo, filename) {
+            const editorUI = document.getElementById('editor-ui');
+            const emptyUI = document.getElementById('empty-ui');
+            const output = document.getElementById('code-output');
+            const pathDisplay = document.getElementById('active-file-path');
+            const liveBtn = document.getElementById('live-preview-btn');
 
-        const response = await fetch(targetUrl);
-        
-        if (!response.ok) {
-            throw new Error(`Server said ${response.status}: ${response.statusText}`);
+            // 1. UI Transitions
+            emptyUI.classList.add('hidden');
+            editorUI.classList.remove('hidden');
+            pathDisplay.innerText = `/${repo}/${filename}`;
+            output.innerText = "// INITIATING RENDER SERVICE HANDSHAKE...";
+            
+            // 2. Build Correct Render URL
+            const targetUrl = `${RENDER_BASE}/${currentUser}/${repo}/${filename}`;
+            liveBtn.href = targetUrl;
+            
+            logger(`Attempting Cross-Origin Fetch: ${targetUrl}`);
+
+            try {
+                // 3. The Fetch Attempt
+                const response = await fetch(targetUrl, {
+                    method: 'GET',
+                    mode: 'cors', // Essential for your server settings
+                    headers: { 'X-Requested-With': 'WolfVoxExplorer' }
+                });
+
+                if (!response.ok) {
+                    const errDetail = `Status ${response.status}: ${response.statusText}`;
+                    logger(`Render Service rejected request. ${errDetail}`, "err");
+                    output.innerText = `/* ERROR IN FETCH */\n\nServer Response: ${errDetail}\n\nCheck Render Logs for User: ${currentUser}`;
+                    return;
+                }
+
+                // 4. Processing Content
+                const code = await response.text();
+                logger(`Payload received (${code.length} bytes). Rendering code...`, "ok");
+                
+                // Escape HTML characters for the code viewer
+                output.textContent = code;
+                
+            } catch (err) {
+                logger(`CORS OR NETWORK FAILURE: ${err.message}`, "err");
+                output.innerHTML = `
+<span style="color:var(--error)">[!] CRITICAL FETCH ERROR</span>
+
+Possible Causes:
+1. CORS is not configured in your 'server.js' on Render.
+2. The file '${filename}' does not exist in path '${currentUser}/${repo}/'.
+3. Your Render server crashed. Check Render logs.
+
+Debug Info: ${err.message}
+                `;
+            }
         }
-        
-        const text = await response.text();
-        output.innerText = text;
-    } catch (err) {
-        output.innerText = `Error: ${err.message}`;
-        console.error("Fetch failure:", err);
-    }
-}
 
-        function closeCode() {
-            document.getElementById('code-view').classList.add('hidden');
-            document.getElementById('explorer-view').classList.remove('hidden');
+        // --- 5. HELPERS ---
+
+        function closeEditor() {
+            document.getElementById('editor-ui').classList.add('hidden');
+            document.getElementById('empty-ui').classList.remove('hidden');
         }
 
-        function checkCookies() {
-            alert("Raw Cookies:\n" + document.cookie);
-            console.log("Current Username:", username);
+        function clearLocalCache() {
+            localStorage.clear();
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            logger("Local data and cookies purged. Reloading...", "warn");
+            setTimeout(() => location.reload(), 1000);
         }
 
+        // Ignition
         window.onload = init;
     </script>
 </body>
