@@ -171,25 +171,25 @@
         `;
     }
 
-    async function loadUserProjects() {
-        const username = user.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const listContainer = document.getElementById('project-list');
+async function loadUserProjects() {
+    // FIX: Extract prefix from email instead of using display name
+    const emailName = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    const listContainer = document.getElementById('project-list');
 
-        // Note: 'sites' is your bucket name
-        const { data, error } = await sb.storage.from('sites').list(username);
+    const { data, error } = await sb.storage.from('sites').list(emailName);
 
-        if (error || !data || data.length === 0) {
-            listContainer.innerHTML = '<p class="text-[10px] text-gray-700">No projects yet.</p>';
-            return;
-        }
-
-        listContainer.innerHTML = data.map(item => `
-            <div onclick="prepUpdate('${item.name}')" class="group flex items-center justify-between p-2 hover:bg-white/5 rounded cursor-pointer transition">
-                <span class="text-sm text-gray-400 group-hover:text-white truncate">${item.name}</span>
-                <i class="fa-solid fa-chevron-right text-[10px] text-gray-800 group-hover:text-gray-400"></i>
-            </div>
-        `).join('');
+    if (error || !data || data.length === 0) {
+        listContainer.innerHTML = '<p class="text-[10px] text-gray-700">No projects yet.</p>';
+        return;
     }
+
+    listContainer.innerHTML = data.map(item => `
+        <div onclick="prepUpdate('${item.name}')" class="group flex items-center justify-between p-2 hover:bg-white/5 rounded cursor-pointer transition">
+            <span class="text-sm text-gray-400 group-hover:text-white truncate">${item.name}</span>
+            <i class="fa-solid fa-chevron-right text-[10px] text-gray-800 group-hover:text-gray-400"></i>
+        </div>
+    `).join('');
+}
 
     function setupDragAndDrop() {
         const dropZone = document.getElementById('drop-zone');
@@ -222,37 +222,40 @@
         }
     }
 
-    async function handleDeploy() {
-        const slug = document.getElementById('proj-slug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
-        const username = user.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-        
-        if (!slug || window.selectedFiles.length === 0) {
-            return alert("Please enter a project slug and upload files.");
-        }
-
-        const btn = document.getElementById('deploy-btn');
-        const originalText = btn.innerText;
-        btn.innerText = "Syncing...";
-        btn.disabled = true;
-        
-        try {
-            for (const file of window.selectedFiles) {
-                const path = `${username}/${slug}/${file.name}`;
-                const { error } = await sb.storage.from('sites').upload(path, file, { upsert: true });
-                if (error) throw error;
-            }
-            
-            alert("Deployment Successful!");
-            resetForm();
-            loadUserProjects();
-        } catch (err) {
-            console.error("Upload error:", err);
-            alert("Upload failed. Check console for details.");
-        } finally {
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
+async function handleDeploy() {
+    const slug = document.getElementById('proj-slug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+    
+    // FIX: Consistently use email prefix for storage path
+    const emailName = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    
+    if (!slug || window.selectedFiles.length === 0) {
+        return alert("Please enter a project slug and upload files.");
     }
+
+    const btn = document.getElementById('deploy-btn');
+    const originalText = btn.innerText;
+    btn.innerText = "Syncing...";
+    btn.disabled = true;
+    
+    try {
+        for (const file of window.selectedFiles) {
+            // Path structure: email_name/repo_slug/filename
+            const path = `${emailName}/${slug}/${file.name}`;
+            const { error } = await sb.storage.from('sites').upload(path, file, { upsert: true });
+            if (error) throw error;
+        }
+        
+        alert("Deployment Successful!");
+        resetForm();
+        loadUserProjects();
+    } catch (err) {
+        console.error("Upload error:", err);
+        alert("Upload failed. Check console for details.");
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
 
 function logout() {
     // 1. Define the cookie name
