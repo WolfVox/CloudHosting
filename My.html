@@ -10,10 +10,10 @@
     
     <style>
         :root {
-            --bg-main: #0d1117; /* GitHub Dark Dimmed */
-            --bg-side: #010409;
-            --bg-hover: #161b22;
-            --border: #30363d;
+            --bg-main: #000000; /* GitHub Dark Dimmed */
+            --bg-side: #000000;
+            --bg-hover: #171818;
+            --border: #727272;
             --accent: #bc8cff; /* WolfVox Purple */
             --text-main: #c9d1d9;
             --text-bright: #ffffff;
@@ -153,12 +153,41 @@
             margin-top: 10px;
         }
 
-        .code-view {
-            flex: 1;
-            background: var(--syntax-bg);
-            overflow: auto;
-            display: flex;
-        }
+/* New Editor Styles */
+.code-view { position: relative; }
+
+#code-area {
+    flex: 1;
+    padding: 20px;
+    color: transparent; /* Text is transparent because Prism sits behind/in front */
+    caret-color: #fff; /* But we need to see the cursor */
+    background: transparent;
+    z-index: 2;
+    white-space: pre;
+    tab-size: 4;
+}
+
+#highlight-layer {
+    position: absolute;
+    top: 20px;
+    left: 70px; /* Offset for line numbers */
+    right: 20px;
+    bottom: 20px;
+    pointer-events: none;
+    z-index: 1;
+    white-space: pre;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* Prism Theme Overrides (Dark) */
+.token.keyword { color: #ff7b72; }
+.token.function { color: #d2a8ff; }
+.token.string { color: #a5d6ff; }
+.token.comment { color: #8b949e; }
+.token.operator { color: #ff7b72; }
+.token.boolean { color: #79c0ff; }
         .line-numbers {
             width: 50px;
             background: #050505;
@@ -223,8 +252,8 @@
 
 <header>
     <div class="logo" onclick="location.href='/'">
-        <i class="fa-solid fa-wolf-pack-battalion"></i>
-        <span>WOLFVOX</span>
+        <img src="https://github.com/WolfVox/Logos/blob/main/wolfvoxtm.png?raw=true" alt="" width="125px" height="45px">
+        <span>Console</span>
     </div>
     
     <div class="search-container">
@@ -233,8 +262,8 @@
     </div>
 
     <div class="header-actions">
-        <button class="btn" title="Create New File"><i class="fa-solid fa-plus"></i></button>
-        <button class="btn"><i class="fa-solid fa-bell"></i></button>
+        <button onclick="window.location='https://wolfvox.github.io/CloudHosting/create'" class="btn" title="Create New File"><i class="fa-solid fa-plus"></i></button>
+        <button onclick="window.location='https://github.com/wolfvox'" class="btn"><i class="fa-solid fa-bell"></i></button>
         <div class="user-pill">
             <i class="fa-solid fa-circle-user"></i>
             <span id="user-display">guest_user</span>
@@ -277,6 +306,13 @@
                 <div class="tab">
                     <i class="fa-solid fa-file-lines" style="color: var(--accent);"></i>
                     <span id="tab-name">filename.js</span>
+                    <div style="display: flex; gap: 8px;">
+    <button class="btn btn-green" onclick="saveFile()">
+        <i class="fa-solid fa-floppy-disk"></i> Save
+    </button>
+    <button class="btn" onclick="copyCode()"><i class="fa-solid fa-copy"></i> Copy</button>
+    <a id="live-link" target="_blank" class="btn"><i class="fa-solid fa-rocket"></i> View</a>
+</div>
                 </div>
                 <div style="display: flex; gap: 8px;">
                     <button class="btn" onclick="copyCode()"><i class="fa-solid fa-copy"></i> Copy</button>
@@ -284,12 +320,17 @@
                 </div>
             </div>
 
-            <div class="code-view">
-                <div class="line-numbers" id="line-nums">
-                    </div>
-                <div id="code-area" class="code-area" contenteditable="false" spellcheck="false">
-                    </div>
-            </div>
+<div class="code-view">
+    <div class="line-numbers" id="line-nums">1</div>
+    <pre id="highlight-layer" aria-hidden="true"><code class="language-javascript" id="highlight-content"></code></pre>
+    <div id="code-area" 
+         class="code-area" 
+         contenteditable="true" 
+         spellcheck="false" 
+         oninput="handleInput()"
+         onkeydown="handleTab(event)">
+    </div>
+</div>
         </div>
     </main>
 </div>
@@ -438,51 +479,86 @@ async function init() {
     }
 
     // --- CODE ENGINE ---
-    async function viewCode(repo, filePath) {
-        const welcomeView = document.getElementById('welcome-view');
-        const editorView = document.getElementById('editor-view');
-        const codeArea = document.getElementById('code-area');
-        const lineNums = document.getElementById('line-nums');
-        const tabName = document.getElementById('tab-name');
-        const breadcrumb = document.getElementById('breadcrumb');
-        const liveLink = document.getElementById('live-link');
+let currentFilePath = "";
 
-        welcomeView.classList.add('hidden');
-        editorView.classList.remove('hidden');
+// 1. Improved View/Load Function
+async function viewCode(repo, filePath) {
+    currentFilePath = filePath;
+    const welcomeView = document.getElementById('welcome-view');
+    const editorView = document.getElementById('editor-view');
+    const codeArea = document.getElementById('code-area');
+    
+    welcomeView.classList.add('hidden');
+    editorView.classList.remove('hidden');
 
-        // Setup UI
-        const fileName = filePath.split('/').pop();
-        tabName.innerText = fileName;
-        codeArea.innerText = "// CONNECTING TO RENDER CLUSTER...";
+    const target = `${CLOUD_URL}/${username}/${repo}/${filePath}`;
+    
+    try {
+        const res = await fetch(target);
+        const rawCode = await res.text();
         
-        // Build Breadcrumbs
-        const parts = filePath.split('/');
-        breadcrumb.innerHTML = `<a>${repo}</a>` + parts.map(p => `<span>/</span><a>${p}</a>`).join('');
-
-        // The Fetch URL
-        const target = `${CLOUD_URL}/${username}/${repo}/${filePath}`;
-        liveLink.href = target;
-
-        try {
-            const res = await fetch(target, { mode: 'cors' });
-            if (!res.ok) throw new Error("CORS_BLOCK_OR_NOT_FOUND");
-            
-            const rawCode = await res.text();
-            
-            // Render Code
-            codeArea.textContent = rawCode;
-            
-            // Generate Line Numbers
-            const lines = rawCode.split('\n').length;
-            lineNums.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
-            
-            updateStatus(`OPENED: ${fileName}`, "ok");
-        } catch (err) {
-            codeArea.innerHTML = `<span style="color:var(--error)">[SYSTEM ERROR]</span>\n\nCOULD NOT FETCH SOURCE.\n\nVerify that 'cors' middleware is active on Render server and '${filePath}' exists.`;
-            lineNums.innerHTML = "!";
-            updateStatus("FETCH_FAILURE", "err");
-        }
+        codeArea.innerText = rawCode;
+        updateEditorUI(); 
+        updateStatus(`EDITING: ${filePath.split('/').pop()}`, "ok");
+    } catch (err) {
+        updateStatus("FETCH_ERROR", "err");
     }
+}
+
+// 2. Real-time Syntax Highlighting & Line Numbers
+function handleInput() {
+    updateEditorUI();
+}
+
+function updateEditorUI() {
+    const code = document.getElementById('code-area').innerText;
+    const highlightContent = document.getElementById('highlight-content');
+    const lineNums = document.getElementById('line-nums');
+
+    // Update Highlighted Layer
+    highlightContent.textContent = code;
+    Prism.highlightElement(highlightContent);
+
+    // Update Line Numbers
+    const lines = code.split('\n').length;
+    lineNums.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
+}
+
+// 3. Handle Tab Key (prevents focus leaving the editor)
+function handleTab(e) {
+    if (e.key === 'Tab') {
+        e.preventDefault();
+        document.execCommand('insertText', false, '    ');
+    }
+}
+
+// 4. SAVE FUNCTION (The "Write" Ability)
+async function saveFile() {
+    if (!activeRepo || !currentFilePath) return;
+
+    updateStatus("Saving to Cloud...", "ok");
+    const content = document.getElementById('code-area').innerText;
+    const fullPath = `${username}/${activeRepo}/${currentFilePath}`;
+
+    const { data, error } = await sb.storage
+        .from('sites')
+        .upload(fullPath, content, {
+            upsert: true, // This overwrites the existing file
+            contentType: 'text/plain'
+        });
+
+    if (error) {
+        console.error(error);
+        updateStatus("SAVE_FAILED", "err");
+        alert("Error saving: " + error.message);
+    } else {
+        updateStatus("FILE_SAVED_SUCCESSFULLY", "ok");
+        // Flash the footer green for a second
+        const f = document.querySelector('footer');
+        f.style.background = "#238636";
+        setTimeout(() => f.style.background = "var(--accent)", 1000);
+    }
+}
 
     // --- UTILITIES ---
     function updateStatus(msg, type) {
