@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WolfVox | Cloud Hosting</title>
-    <meta name="description" content="The developer-first cloud for static and dynamic sites. Powered by Supabase to ensure your data never vanishes, even on free tiers with a Dynamic url https://username.wolfvox.me/repo , Deploy in seconds.
-Scale instantly. ">
+    <meta name="description" content="The developer-first cloud. Deploy in seconds. Scale instantly.">
     <link rel="icon" type="image/x-icon" href="https://github.com/WolfVox/Logos/blob/main/WolfCloud.png?raw=true">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,10 +13,10 @@ Scale instantly. ">
     
     <style>
         :root {
-            --bg: #030303;
-            --card-bg: #0a0a0a;
-            --border: rgba(255, 255, 255, 0.08);
-            --render-purple: #9333ea;
+            --bg: #000000;
+            --card-bg: #080808;
+            --border: rgba(255, 255, 255, 0.1);
+            --cf-orange: #f38020; /* Cloudflare Orange accent */
         }
 
         body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: #ffffff; scroll-behavior: smooth; }
@@ -26,298 +25,238 @@ Scale instantly. ">
         .glass-card { 
             background: var(--card-bg);
             border: 1px solid var(--border);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s ease;
         }
         .glass-card:hover { border: 1px solid rgba(255, 255, 255, 0.2); }
 
-        .gradient-text {
-            background: linear-gradient(180deg, #fff 0%, #a1a1a1 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .btn-outline {
+            border: 1px solid var(--border);
+            background: transparent;
+            transition: all 0.2s;
         }
+        .btn-outline:hover { background: rgba(255, 255, 255, 0.05); border-color: #fff; }
 
-        .btn-primary {
-            position: relative; background: #fff; color: #000; overflow: hidden; z-index: 1; transition: color 0.4s;
+        .btn-white {
+            background: #fff;
+            color: #000;
+            font-weight: 600;
+            transition: opacity 0.2s;
         }
-        .btn-primary:hover { color: #fff; }
-        .btn-primary::before {
-            content: ""; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-            background: #000; z-index: -1; transition: transform 0.4s cubic-bezier(0.7, 0, 0.2, 1);
-        }
-        .btn-primary:hover::before { transform: translateX(100%); }
+        .btn-white:hover { opacity: 0.9; }
 
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0px rgba(34, 197, 94, 0.4); }
-            100% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+        @keyframes pulse-dot {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
         }
-        .pulse { animation: pulse-green 2s infinite; }
-        
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        .pulse { animation: pulse-dot 2s infinite; }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- TOP NAV -->
-    <nav class="flex items-center justify-between px-6 py-3 border-b border-white/5 sticky top-0 bg-black/80 backdrop-blur-xl z-[100]">
-        <div class="flex items-center gap-10">
-            <div class="flex items-center gap-2 cursor-pointer" onclick="location.href='/'">
-                <img src="https://github.com/WolfVox/Logos/blob/main/wolfvoxtm.png?raw=true" class="w-15 h-10" alt="Logo">
-                <img src="https://github.com/WolfVox/Logos/blob/main/WolfCloud.png?raw=true" class="w-14 h-14" alt="Logo">
+    <nav class="flex items-center justify-between px-8 py-4 border-b border-white/10 sticky top-0 bg-black/90 backdrop-blur-md z-[100]">
+        <div class="flex items-center gap-8">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="location.href='/'">
+                <img src="https://github.com/WolfVox/Logos/blob/main/WolfCloud.png?raw=true" height="75px" width="75px"  alt="WolfVox Cloud Logo">
+                <span class="text-xl font-bold tracking-tight hidden sm:block">WolfVox</span>
             </div>
-            <div class="hidden lg:flex gap-6 text-[13px] font-medium text-zinc-400">
-                <a href="#" class="hover:text-white transition">Dashboard</a>
-                <a href="/CloudHosting/Docs" class="hover:text-white transition">Docs</a>
+            <div class="hidden md:flex gap-6 text-[14px] text-zinc-400">
+                <a href="#" class="hover:text-white transition">Network</a>
+                <a href="#" class="hover:text-white transition">Security</a>
+                <a href="/CloudHosting/Docs" class="hover:text-white transition">Developers</a>
                 <a href="#" class="hover:text-white transition">Pricing</a>
             </div>
         </div>
         <div class="flex items-center gap-4">
-            <button id="signin-btn" class="text-[13px] font-medium text-zinc-400 hover:text-white transition">Sign In</button>
-            <button id="start-btn" class="btn-primary px-5 py-1.5 rounded-full text-[13px] font-bold border border-white">Get Started</button>
+            <button id="signin-btn" class="text-[14px] font-medium text-zinc-400 hover:text-white transition px-3">Log In</button>
+            <button id="start-btn" class="btn-white px-5 py-2 rounded-md text-[13px]">Sign Up</button>
         </div>
     </nav>
 
-    <!-- RESTORED SUB-NAV -->
-    <div class="flex gap-8 px-8 py-2 border-b border-white/5 bg-[#050505] overflow-x-auto no-scrollbar">
-        <a href="#" class="text-[12px] text-white border-b border-white pb-2 whitespace-nowrap">Overview</a>
-        <a href="#" class="text-[12px] text-zinc-500 hover:text-white pb-2 transition whitespace-nowrap">Deployments</a>
-        <a href="#" class="text-[12px] text-zinc-500 hover:text-white pb-2 transition whitespace-nowrap">Analytics</a>
-        <a href="#" class="text-[12px] text-zinc-500 hover:text-white pb-2 transition whitespace-nowrap">Logs</a>
-        <a href="#" class="text-[12px] text-zinc-500 hover:text-white pb-2 transition whitespace-nowrap">Settings</a>
+    <div class="flex items-center justify-between px-8 py-2 border-b border-white/5 bg-[#050505] overflow-x-auto no-scrollbar">
+        <div class="flex gap-6">
+            <a href="#" class="text-[12px] text-white border-b-2 border-orange-500 pb-1 font-medium">Overview</a>
+            <a href="#" class="text-[12px] text-zinc-500 hover:text-white pb-1 transition">DNS</a>
+            <a href="#" class="text-[12px] text-zinc-500 hover:text-white pb-1 transition">Workers</a>
+            <a href="#" class="text-[12px] text-zinc-500 hover:text-white pb-1 transition">R2 Storage</a>
+        </div>
+        <div class="hidden sm:flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+            <span class="text-[11px] text-zinc-400 mono uppercase">All Systems Operational</span>
+        </div>
     </div>
 
-    <main class="max-w-7xl mx-auto px-6 pt-20">
+    <main class="max-w-7xl mx-auto px-6 py-16">
         
-        <!-- HERO -->
-        <div class="text-center mb-16">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-white/10 text-[11px] font-medium text-zinc-400 mb-8">
-                <span class="w-2 h-2 rounded-full bg-green-500 pulse"></span>
-                WolfVox Cloud v1.0 is now stable
-            </div>
-            <h2 class="text-5xl md:text-8xl font-bold mb-8 gradient-text tracking-tighter">
-                Deploy in seconds. <br>Scale instantly.
-            </h2>
-            <p class="text-zinc-400 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
-                The developer-first cloud for static and dynamic sites. Powered by Supabase to ensure your data never vanishes.
+        <div class="mb-16" style="display: flex; justify-content: space-evenly; align-items: center;">
+            <div>
+            <h1 class="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
+                Global Infrastructure <br><span class="text-zinc-500">at your fingertips.</span>
+            </h1>
+            <p class="text-zinc-400 text-lg max-w-2xl mb-8">
+                Deploy dynamic applications and static content to our edge network. Protected by Supabase, delivered by WolfVox.
             </p>
-        </div>
+                            <button class="btn-white px-8 py-3 rounded-md shadow-lg shadow-white/5">Start Deploying</button>
+                <button class="btn-outline px-8 py-3 rounded-md text-sm font-medium">Contact Sales</button>
+            </div>
+            <div class="flex gap-4">
+                <img src="https://github.com/WolfVox/Logos/blob/main/WolfCloud.png?raw=true" class="iconuc" height="250px" width="250px"  alt="WolfVox Cloud Logo">
 
-        <!-- URL SHOWCASE -->
-        <div class="glass-card mb-12 rounded-2xl overflow-hidden border-purple-500/20 bg-gradient-to-b from-purple-500/5 to-transparent">
-            <div class="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Active Edge Route</span>
-                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 pulse"></span>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">Dynamic Deployment URL</h3>
-                    <p class="text-zinc-500 text-sm">WolfVox automatically routes traffic to your Supabase-stored assets.</p>
-                </div>
-                
-                <div class="flex flex-col items-end gap-3 w-full md:w-auto">
-                    <div class="group relative flex items-center bg-black border border-white/10 rounded-lg p-1 pl-4 w-full md:w-[450px]">
-                        <code class="mono text-[13px] text-zinc-300 truncate">
-                            <span class="text-purple-500">https://</span>username.wolfvox.me/<span class="text-white">:repo</span>
-                        </code>
-                        <button onclick="copyUrl()" class="ml-auto bg-zinc-900 hover:bg-zinc-800 text-zinc-400 p-2.5 rounded-md transition border border-white/5">
-                            <i class="fa-regular fa-copy"></i>
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
 
-        <!-- DASHBOARD GRID -->
-        <div class="grid lg:grid-cols-3 gap-6 mb-24">
-            <div class="glass-card p-8 rounded-2xl">
-                <h3 class="text-[11px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-6">Status</h3>
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-zinc-400">Database</span>
-                        <span class="text-green-500 mono text-[10px]">CONNECTED</span>
-                    </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-zinc-400">S3 Bucket</span>
-                        <span class="text-green-500 mono text-[10px]">ACTIVE</span>
-                    </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-zinc-400">Network</span>
-                        <span class="text-yellow-500 mono text-[10px]">14ms Latency</span>
-                    </div>
+        <div class="mb-12">
+            
+            <div class="lg:col-span-2 glass-card p-8 rounded-xl flex flex-col justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold mb-2">Endpoint Configuration</h3>
+                    <p class="text-zinc-500 text-sm mb-6">Your projects are automatically served via our high-speed edge proxy.</p>
+                </div>
+                <div class="flex flex-col sm:flex-row items-center gap-3 bg-black border border-white/10 rounded-lg p-2 pl-4">
+                    <code class="mono text-[14px] text-zinc-300 flex-1 truncate">
+                        <span class="text-zinc-500">https://</span>username.wolfvox.me/<span class="text-orange-400">repo-name</span>
+                    </code>
+                    <button onclick="copyUrl()" class="w-full sm:w-auto bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-md transition text-xs font-bold">
+                        COPY URL
+                    </button>
                 </div>
             </div>
 
-            <!-- HEARTBEAT CHART -->
-            <div class="lg:col-span-2 glass-card p-8 rounded-2xl">
-                <div class="flex justify-between items-center mb-4">
-                   <h3 class="text-[11px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Live Heartbeat</h3>
-                   <span class="text-[10px] mono text-purple-400">REAL-TIME TRAFFIC</span>
+            <div class="glass-card p-6 rounded-xl">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <p class="text-xs text-zinc-500 uppercase font-bold tracking-widest mb-1">Requests (24h)</p>
+                        <h4 class="text-2xl font-bold">1.2M</h4>
+                    </div>
+                    <i class="fa-solid fa-chart-line text-zinc-700 text-xl"></i>
                 </div>
-                <div class="h-[200px] w-full">
+                <div class="h-24 w-full">
+                    <canvas id="miniChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="grid lg:grid-cols-4 gap-6">
+            <div class="lg:col-span-3 glass-card rounded-xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-white/5 bg-zinc-900/20 flex justify-between items-center">
+                    <span class="text-xs mono font-bold text-zinc-400 uppercase">Deployment Traffic — Edge Nodes</span>
+                    <div class="flex gap-4">
+                        <span class="text-[10px] text-green-500 mono">HTTP 200: 99.9%</span>
+                        <span class="text-[10px] text-orange-500 mono">Cache: Hit</span>
+                    </div>
+                </div>
+                <div class="p-6 h-[300px]">
                     <canvas id="heartbeatChart"></canvas>
                 </div>
             </div>
 
-            <!-- TERMINAL LOGS -->
-            <div class="lg:col-span-3 glass-card bg-black rounded-2xl overflow-hidden border-white/5">
-                <div class="px-6 py-3 border-b border-white/5 bg-zinc-900/30 flex justify-between">
-                    <span class="text-[10px] mono text-zinc-500 uppercase">System Logs — cluster-west-1</span>
-                    <span class="text-[10px] mono text-green-500">● LIVE SYNCING</span>
+            <div class="glass-card p-6 rounded-xl flex flex-col">
+                <h3 class="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-6">Environment</h3>
+                <div class="space-y-6 flex-1">
+                    <div class="flex items-center gap-4">
+                        <div class="w-8 h-8 rounded bg-zinc-900 flex items-center justify-center border border-white/10">
+                            <i class="fa-solid fa-database text-xs text-zinc-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] text-zinc-500 uppercase font-bold">Database</p>
+                            <p class="text-sm font-medium">Supabase PG</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-8 h-8 rounded bg-zinc-900 flex items-center justify-center border border-white/10">
+                            <i class="fa-solid fa-globe text-xs text-zinc-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] text-zinc-500 uppercase font-bold">SSL/TLS</p>
+                            <p class="text-sm font-medium">Auto-Managed</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-8 h-8 rounded bg-zinc-900 flex items-center justify-center border border-white/10">
+                            <i class="fa-solid fa-bolt text-xs text-zinc-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] text-zinc-500 uppercase font-bold">Latency</p>
+                            <p class="text-sm font-medium text-green-400">12ms (Avg)</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="p-6 h-40 overflow-y-auto mono text-[12px] custom-scrollbar text-zinc-500" id="logs">
-                    <div>[SYSTEM] WolfCloud Engine v1.0 Initialized...</div>
-                </div>
+                <button class="w-full btn-outline py-2 mt-4 text-xs rounded">Refresh Metrics</button>
             </div>
         </div>
     </main>
 
-    <!-- RESTORED 4-COLUMN FOOTER -->
-    <footer class="border-t border-white/5 py-20 bg-[#020202]">
-        <div class="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12">
+    <footer class="border-t border-white/10 py-16 mt-20">
+        <div class="max-w-7xl mx-auto px-8 grid grid-cols-2 md:grid-cols-4 gap-12">
             <div>
-                <h4 class="text-white font-bold mb-6 text-sm">Product</h4>
-                <ul class="text-zinc-500 text-sm space-y-4">
-                    <li><a href="#" class="hover:text-white transition">Hosting</a></li>
-                    <li><a href="#" class="hover:text-white transition">Forms</a></li>
-                    <li><a href="#" class="hover:text-white transition">Marketplace</a></li>
-                </ul>
+                <img src="https://github.com/WolfVox/Logos/blob/main/WolfCloud.png?raw=true" class="w-12 h-12 mb-6 grayscale hover:grayscale-0 transition" alt="Logo">
+                <p class="text-zinc-500 text-xs leading-relaxed">© Copyrighted 2026 wolfvoxco.</p>
             </div>
-            <div>
-                <h4 class="text-white font-bold mb-6 text-sm">Resources</h4>
-                <ul class="text-zinc-500 text-sm space-y-4">
-                    <li><a href="#" class="hover:text-white transition">Docs</a></li>
-                    <li><a href="#" class="hover:text-white transition">API</a></li>
-                    <li><a href="#" class="hover:text-white transition">Support</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-white font-bold mb-6 text-sm">Company</h4>
-                <ul class="text-zinc-500 text-sm space-y-4">
-                    <li><a href="#" class="hover:text-white transition">About</a></li>
-                    <li><a href="#" class="hover:text-white transition">Privacy</a></li>
-                    <li><a href="#" class="hover:text-white transition">Terms</a></li>
-                </ul>
-            </div>
-            <div class="col-span-2 md:col-span-1">
-                <img src="https://github.com/WolfVox/wolfvox.github.io/blob/main/WolfVoxLogo.png?raw=true" class="w-10 h-10 mb-6 grayscale" alt="Logo">
-                <p class="text-zinc-600 text-[12px]">© 2026 WolfVoxCo. Powered by the edge.</p>
-            </div>
-        </div>
+        
     </footer>
 
 <script>
-    /* --- SHARED COOKIE UTILITIES --- */
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
-        return null;
-    }
-
-    /* AUTH LOGIC */
-    function checkAuth() {
-        // Retrieve user from Cookie instead of LocalStorage
-        const cookieData = getCookie('wv_user');
-        let user = null;
-        
-        if (cookieData) {
-            try {
-                user = JSON.parse(cookieData);
-            } catch (e) {
-                console.error("Auth parse error", e);
-            }
-        }
-
-        const signinBtn = document.getElementById('signin-btn');
-        const startBtn = document.getElementById('start-btn');
-
-        if (user && signinBtn && startBtn) {
-            signinBtn.innerText = "Dashboard";
-            startBtn.innerText = "New Project";
-            
-            // Optional: Update UI to show user is active
-            console.log(`Cloud Hosting active for: ${user.email}`);
-        }
-        
-        return user;
-    }
-
-    // Redirect logic helper
-    function handleAuthAction() {
-        const user = getCookie('wv_user');
-        if (user) {
-            window.location.href = 'https://wolfvox.github.io/CloudHosting/create.html';
-        } else {
-            window.location.href = 'https://wolfvox.github.io/signin';
-        }
-    }
-
-    document.getElementById('start-btn').addEventListener('click', handleAuthAction);
-    document.getElementById('signin-btn').addEventListener('click', handleAuthAction);
-
-    window.onload = () => {
-        checkAuth();
-        // Initialize intervals for the dashboard vibe
-        setInterval(addLog, 4000);
-        setInterval(updateChart, 150);
+    /* --- CHART CONFIGS --- */
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 800, easing: 'easeInOutQuad' },
+        plugins: { legend: { display: false } },
+        scales: { x: { display: false }, y: { display: false } }
     };
 
-    /* HEARTBEAT CHART */
+    // Big Heartbeat Chart
     const ctx = document.getElementById('heartbeatChart').getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(243, 128, 32, 0.2)');
+    gradient.addColorStop(1, 'rgba(243, 128, 32, 0)');
+
     const heartbeatChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: Array(25).fill(''),
+            labels: Array(30).fill(''),
             datasets: [{
-                data: Array(25).fill(10),
-                borderColor: '#9333ea',
+                data: Array(30).fill(20),
+                borderColor: '#f38020',
                 borderWidth: 2,
                 pointRadius: 0,
-                tension: 0,
-                fill: false
+                tension: 0.4,
+                fill: true,
+                backgroundColor: gradient
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 0 },
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { display: false },
-                y: { display: false, min: 0, max: 100 }
-            }
-        }
+        options: chartOptions
     });
 
-    function updateChart() {
-        heartbeatChart.data.datasets[0].data.shift();
-        let newVal = Math.random() > 0.85 ? Math.floor(Math.random() * 80) + 15 : 10;
-        heartbeatChart.data.datasets[0].data.push(newVal);
-        heartbeatChart.update();
-    }
+    // Small Mini Chart
+    const miniCtx = document.getElementById('miniChart').getContext('2d');
+    new Chart(miniCtx, {
+        type: 'bar',
+        data: {
+            labels: Array(15).fill(''),
+            datasets: [{
+                data: [40, 50, 45, 60, 70, 65, 80, 90, 85, 95, 100, 90, 85, 90, 95],
+                backgroundColor: '#3f3f46',
+                borderRadius: 2
+            }]
+        },
+        options: chartOptions
+    });
 
-    /* TERMINAL LOGS */
-    const logs = document.getElementById('logs');
-    function addLog() {
-        if(!logs) return;
-        const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
-        const msgs = [
-            `[${time}] → GET /api/v1/assets 200 OK`,
-            `[${time}] ⚡ Scaling cluster-west-1...`,
-            `[${time}] → Background sync with Supabase...`,
-            `[${time}] → Static generation complete (104ms)`
-        ];
-        const div = document.createElement('div');
-        div.innerText = msgs[Math.floor(Math.random() * msgs.length)];
-        logs.appendChild(div);
-        if (logs.children.length > 15) logs.removeChild(logs.firstChild);
-        logs.scrollTop = logs.scrollHeight;
-    }
+    // Dynamic update for heartbeat
+    setInterval(() => {
+        heartbeatChart.data.datasets[0].data.shift();
+        let newVal = 20 + Math.floor(Math.random() * 40);
+        heartbeatChart.data.datasets[0].data.push(newVal);
+        heartbeatChart.update('none');
+    }, 1000);
 
     function copyUrl() {
-        navigator.clipboard.writeText("https://wolfcloud.onrender.com/:user/:repo");
-        alert("Pattern copied to clipboard");
+        navigator.clipboard.writeText("https://username.wolfvox.me/:repo");
+        alert("Endpoint pattern copied!");
     }
 </script>
 </body>
