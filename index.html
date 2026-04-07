@@ -16,7 +16,7 @@
             --bg: #000000;
             --card-bg: #080808;
             --border: rgba(255, 255, 255, 0.1);
-            --cf-orange: #f38020; /* Cloudflare Orange accent */
+            --cf-orange: #f38020;
         }
 
         body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: #ffffff; scroll-behavior: smooth; }
@@ -98,17 +98,15 @@
             <p class="text-zinc-400 text-lg max-w-2xl mb-8">
                 Deploy dynamic applications and static content to our edge network. Protected by Supabase, delivered by WolfVox.
             </p>
-                            <button class="btn-white px-8 py-3 rounded-md shadow-lg shadow-white/5">Start Deploying</button>
+                <button class="btn-white px-8 py-3 rounded-md shadow-lg shadow-white/5">Start Deploying</button>
                 <button class="btn-outline px-8 py-3 rounded-md text-sm font-medium">Contact Sales</button>
             </div>
             <div class="flex gap-4">
                 <img src="https://github.com/WolfVox/Logos/blob/main/WolfCloud.png?raw=true" class="iconuc" height="250px" width="250px"  alt="WolfVox Cloud Logo">
-
             </div>
         </div>
 
         <div class="mb-12">
-            
             <div class="lg:col-span-2 glass-card p-8 rounded-xl flex flex-col justify-between">
                 <div>
                     <h3 class="text-lg font-semibold mb-2">Endpoint Configuration</h3>
@@ -124,7 +122,7 @@
                 </div>
             </div>
 
-            <div class="glass-card p-6 rounded-xl">
+            <div class="glass-card p-6 rounded-xl mt-6">
                 <div class="flex justify-between items-start mb-6">
                     <div>
                         <p class="text-xs text-zinc-500 uppercase font-bold tracking-widest mb-1">Requests (24h)</p>
@@ -136,7 +134,6 @@
                     <canvas id="miniChart"></canvas>
                 </div>
             </div>
-
         </div>
 
         <div class="grid lg:grid-cols-4 gap-6">
@@ -151,6 +148,7 @@
                 <div class="p-6 h-[300px]">
                     <canvas id="heartbeatChart"></canvas>
                 </div>
+                <div id="logs" class="p-4 bg-black/50 mono text-[10px] text-zinc-500 h-32 overflow-y-auto border-t border-white/5"></div>
             </div>
 
             <div class="glass-card p-6 rounded-xl flex flex-col">
@@ -190,25 +188,59 @@
     </main>
 
     <footer class="border-t border-white/10 py-16 mt-20">
-        <div class="max-w-7xl mx-auto px-8 grid grid-cols-2 md:grid-cols-4 gap-12">
-            <div>
-                <img src="https://github.com/WolfVox/Logos/blob/main/WolfCloud.png?raw=true" class="w-12 h-12 mb-6 grayscale hover:grayscale-0 transition" alt="Logo">
-                <p class="text-zinc-500 text-xs leading-relaxed">© Copyrighted 2026 wolfvoxco.</p>
-            </div>
-        
+        <div class="max-w-7xl mx-auto px-8">
+            <img src="https://github.com/WolfVox/Logos/blob/main/WolfCloud.png?raw=true" class="w-12 h-12 mb-6 grayscale hover:grayscale-0 transition" alt="Logo">
+            <p class="text-zinc-500 text-xs leading-relaxed">© Copyrighted 2026 wolfvoxco.</p>
+        </div>
     </footer>
 
 <script>
+    /* --- SHARED COOKIE UTILITIES --- */
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+        return null;
+    }
+
+    /* AUTH LOGIC */
+    function checkAuth() {
+        const cookieData = getCookie('wv_user');
+        let user = null;
+        if (cookieData) {
+            try { user = JSON.parse(cookieData); } catch (e) { console.error("Auth parse error", e); }
+        }
+        const signinBtn = document.getElementById('signin-btn');
+        const startBtn = document.getElementById('start-btn');
+        if (user && signinBtn && startBtn) {
+            signinBtn.innerText = "Dashboard";
+            startBtn.innerText = "New Project";
+        }
+        return user;
+    }
+
+    function handleAuthAction() {
+        const user = getCookie('wv_user');
+        if (user) {
+            window.location.href = 'https://wolfvox.github.io/CloudHosting/create.html';
+        } else {
+            window.location.href = 'https://wolfvox.github.io/signin';
+        }
+    }
+
+    document.getElementById('start-btn').addEventListener('click', handleAuthAction);
+    document.getElementById('signin-btn').addEventListener('click', handleAuthAction);
+
     /* --- CHART CONFIGS --- */
     const chartOptions = {
         responsive: true,
         maintainAspectRatio: false,
-        animation: { duration: 800, easing: 'easeInOutQuad' },
+        animation: { duration: 0 },
         plugins: { legend: { display: false } },
-        scales: { x: { display: false }, y: { display: false } }
+        scales: { x: { display: false }, y: { display: false, min: 0, max: 100 } }
     };
 
-    // Big Heartbeat Chart
+    // restored: Orange Curvy Heartbeat Chart
     const ctx = document.getElementById('heartbeatChart').getContext('2d');
     const gradient = ctx.createLinearGradient(0, 0, 0, 300);
     gradient.addColorStop(0, 'rgba(243, 128, 32, 0.2)');
@@ -217,21 +249,27 @@
     const heartbeatChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: Array(30).fill(''),
+            labels: Array(25).fill(''),
             datasets: [{
-                data: Array(30).fill(20),
+                data: Array(25).fill(20),
                 borderColor: '#f38020',
                 borderWidth: 2,
                 pointRadius: 0,
-                tension: 0.4,
+                tension: 0.4, // Curvy style restored
                 fill: true,
-                backgroundColor: gradient
+                backgroundColor: gradient // Orange fill restored
             }]
         },
         options: chartOptions
     });
 
-    // Small Mini Chart
+    function updateChart() {
+        heartbeatChart.data.datasets[0].data.shift();
+        let newVal = Math.random() > 0.85 ? Math.floor(Math.random() * 80) + 15 : 20;
+        heartbeatChart.data.datasets[0].data.push(newVal);
+        heartbeatChart.update('none');
+    }
+
     const miniCtx = document.getElementById('miniChart').getContext('2d');
     new Chart(miniCtx, {
         type: 'bar',
@@ -243,21 +281,37 @@
                 borderRadius: 2
             }]
         },
-        options: chartOptions
+        options: { ...chartOptions, animation: { duration: 800 } }
     });
 
-    // Dynamic update for heartbeat
-    setInterval(() => {
-        heartbeatChart.data.datasets[0].data.shift();
-        let newVal = 20 + Math.floor(Math.random() * 40);
-        heartbeatChart.data.datasets[0].data.push(newVal);
-        heartbeatChart.update('none');
-    }, 1000);
+    /* TERMINAL LOGS */
+    const logs = document.getElementById('logs');
+    function addLog() {
+        if(!logs) return;
+        const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+        const msgs = [
+            `[${time}] → GET /api/v1/assets 200 OK`,
+            `[${time}] ⚡ Scaling cluster-west-1...`,
+            `[${time}] → Background sync with Supabase...`,
+            `[${time}] → Static generation complete (104ms)`
+        ];
+        const div = document.createElement('div');
+        div.innerText = msgs[Math.floor(Math.random() * msgs.length)];
+        logs.appendChild(div);
+        if (logs.children.length > 15) logs.removeChild(logs.firstChild);
+        logs.scrollTop = logs.scrollHeight;
+    }
 
     function copyUrl() {
-        navigator.clipboard.writeText("https://username.wolfvox.me/:repo");
-        alert("Endpoint pattern copied!");
+        navigator.clipboard.writeText("https://wolfcloud.onrender.com/:user/:repo");
+        alert("Pattern copied to clipboard");
     }
+
+    window.onload = () => {
+        checkAuth();
+        setInterval(addLog, 4000);
+        setInterval(updateChart, 150);
+    };
 </script>
 </body>
 </html>
