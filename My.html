@@ -312,31 +312,53 @@
     let currentPath = "";
 
     // --- INITIALIZATION ---
-    async function init() {
-        console.log("System: Booting Kernal 5.0...");
-        
-        // Authenticate User from Cookie
-        const userCookie = document.cookie.split('; ').find(row => row.startsWith('wv_user='));
-        if (userCookie) {
-            try {
-                const data = JSON.parse(decodeURIComponent(userCookie.split('=')[1]));
+// --- INITIALIZATION ---
+async function init() {
+    console.log("System: Booting Kernal 5.0...");
+    
+    // 1. Authenticate User from Cookie
+    const userCookie = document.cookie.split('; ').find(row => row.startsWith('wv_user='));
+    
+    if (userCookie) {
+        try {
+            const data = JSON.parse(decodeURIComponent(userCookie.split('=')[1]));
+            
+            /** * FIX: Extract the Gmail ID (userid) from the email 
+             * instead of using the Display Name (data.name)
+             */
+            if (data.email) {
+                username = data.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+            } else {
+                // Fallback to name if email is missing, but sanitize it
                 username = data.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-            } catch(e) { console.warn("Session Corrupt"); }
+            }
+            
+            // Set the UI badge to show the @userid
+            document.getElementById('user-display').innerText = `@${username}`;
+            
+        } catch(e) { 
+            console.warn("Session Corrupt or Cookie missing email field"); 
+            document.getElementById('user-display').innerText = "error_auth";
         }
-
-        document.getElementById('user-display').innerText = username;
-        sb = supabase.createClient(SB_URL, SB_KEY);
-
-        await fetchRepos();
-
-        // Auto-load repo if in URL
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('repo')) {
-            const repoFromUrl = urlParams.get('repo');
-            document.getElementById('repo-dropdown').value = repoFromUrl;
-            switchRepo(repoFromUrl);
-        }
+    } else {
+        // If no cookie, you might want to redirect to login
+        console.warn("No active session found.");
+        document.getElementById('user-display').innerText = "guest_session";
     }
+
+    sb = supabase.createClient(SB_URL, SB_KEY);
+
+    // 2. Fetch Repositories for this specific User ID
+    await fetchRepos();
+
+    // 3. Auto-load repo if in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('repo')) {
+        const repoFromUrl = urlParams.get('repo');
+        document.getElementById('repo-dropdown').value = repoFromUrl;
+        switchRepo(repoFromUrl);
+    }
+}
 
     // --- REPOSITORY LOGIC ---
     async function fetchRepos() {
