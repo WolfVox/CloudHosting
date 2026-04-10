@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WolfCloud Console | Pro Editor</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    
+    <style>
+        :root {
+            --bg-main: #000000;
+            --bg-side: #080808;
+            --bg-hover: #121212;
+            --border: rgba(255, 255, 255, 0.1);
+            --accent: #f38020; /* WolfCloud Orange */
+            --text-main: #a1a1aa;
+            --text-bright: #ffffff;
+            --success: #22c55e;
+            --pending: #eab308;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Custom Scrollbar for IDE feel */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: #222; border: 2px solid var(--bg-main); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #333; }
+
+        header { height: 60px; background: var(--bg-side); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 20px; z-index: 100; }
+        
+        .search-container { flex: 1; max-width: 500px; position: relative; }
+        .search-container input {
+            width: 100%; background: var(--bg-main); border: 1px solid var(--border);
+            border-radius: 6px; padding: 8px 12px 8px 35px; color: #fff; outline: none; font-size: 13px; transition: border 0.2s;
+        }
+        .search-container input:focus { border-color: var(--accent); }
+        .search-container i { position: absolute; left: 12px; top: 10px; color: #555; }
+
+        .viewport { display: flex; flex: 1; overflow: hidden; }
+
+        aside { width: 280px; background: var(--bg-side); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .tree-view { flex: 1; overflow-y: auto; padding: 10px 0; }
+        .tree-item { padding: 8px 20px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; transition: 0.1s; }
+        .tree-item:hover { background: var(--bg-hover); color: white; }
+        .tree-item.active { background: rgba(243, 128, 32, 0.1); color: var(--accent); border-right: 2px solid var(--accent); }
+
+        main { flex: 1; display: flex; flex-direction: column; background: var(--bg-main); overflow: hidden; }
+
+        /* EDITOR UI */
+        .editor-header { height: 40px; background: #050505; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
+        .code-view { flex: 1; display: flex; position: relative; overflow: auto; background: #000; }
+        
+        .line-numbers {
+            width: 50px; background: #050505; color: #3b424d; text-align: right;
+            padding: 20px 10px; font-family: 'JetBrains Mono', monospace; font-size: 12px;
+            user-select: none; border-right: 1px solid var(--border); sticky; left: 0;
+        }
+
+        #code-area {
+            flex: 1; padding: 20px; color: #e2e8f0; background: transparent;
+            font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6;
+            white-space: pre; outline: none; min-width: 1000px; z-index: 5;
+        }
+
+        #highlight-layer {
+            position: absolute; top: 20px; left: 70px; pointer-events: none;
+            font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; z-index: 1;
+        }
+
+        footer {
+            height: 30px; background: #0a0a0a; border-top: 1px solid var(--border);
+            display: flex; align-items: center; padding: 0 15px; font-size: 11px;
+            justify-content: space-between; color: var(--text-main);
+        }
+
+        /* Sync Pulse Animation */
+        .pulse-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: var(--success);
+            display: inline-block; margin-right: 8px; position: relative;
+        }
+        .pulse-active::after {
+            content: ''; position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px;
+            border-radius: 50%; border: 2px solid inherit;
+            animation: growFade 1.5s infinite;
+        }
+        @keyframes growFade {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+
+        .btn {
+            background: #111; border: 1px solid var(--border); color: #ccc;
+            padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .btn:hover { border-color: var(--accent); color: white; }
+        .btn-save { background: var(--accent); color: white; border: none; font-weight: bold; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo" onclick="location.href='index.html'" style="display:flex; align-items:center; gap:10px; color:white; font-weight:800; cursor:pointer;">
+        <img src="https://github.com/WolfVox/Logos/blob/main/WolfCloud.png?raw=true" width="30">
+        WolfCloud <span style="color:var(--text-main); font-weight:400;">Console</span>
+    </div>
+    
+    <div class="search-container">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="global-search" placeholder="Mount remote repo: user/repo_name (Press Enter)" onkeydown="handleSearch(event)">
+    </div>
+
+    <div style="margin-left:auto; display:flex; gap:10px;">
+        <div class="btn"><i class="fa-solid fa-circle-user"></i> <span id="user-display">guest</span></div>
+    </div>
+</header>
+
+<div class="viewport">
+    <aside>
+        <div style="padding:15px; border-bottom:1px solid var(--border);">
+            <select class="btn" id="repo-dropdown" onchange="switchRepo(this.value)" style="width:100%; text-align:left;">
+                <option value="">Select Local Repo...</option>
+            </select>
+        </div>
+        <div class="tree-view" id="file-tree">
+            <div style="text-align:center; padding-top:50px; opacity:0.3;">
+                <i class="fa-solid fa-folder-open" style="font-size:30px;"></i>
+                <p style="font-size:11px; margin-top:10px;">No repository mounted.</p>
+            </div>
+        </div>
+    </aside>
+
+    <main>
+        <div id="welcome-view" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0.3;">
+            <i class="fa-solid fa-code" style="font-size:60px;"></i>
+            <h2 style="margin-top:20px; font-weight:300;">WolfCloud Engine Pro</h2>
+        </div>
+
+        <div id="editor-view" class="hidden" style="flex:1; display:flex; flex-direction:column;">
+            <div class="editor-header">
+                <div style="font-size:12px; color:white;" id="tab-label">filename.js</div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn" onclick="copyCode()"><i class="fa-solid fa-copy"></i></button>
+                    <button class="btn btn-save" onclick="saveFile()"><i class="fa-solid fa-cloud-arrow-up"></i> PUSH CHANGES</button>
+                </div>
+            </div>
+            <div class="code-view">
+                <div class="line-numbers" id="line-nums">1</div>
+                <pre id="highlight-layer" aria-hidden="true"><code class="language-javascript" id="highlight-content"></code></pre>
+                <div id="code-area" contenteditable="true" spellcheck="false" oninput="handleInput()" onkeydown="handleTab(event)"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<footer>
+    <div id="status-left" style="display:flex; align-items:center;">
+        <span id="sync-indicator" class="pulse-dot"></span>
+        <span id="status-msg">ENGINE_IDLE</span>
+    </div>
+    <div id="status-right" class="mono" style="opacity:0.5;">UTF-8 | LF | JavaScript</div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+    const SB_URL = "https://lqdrtozuoslhufhpqwae.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZHJ0b3p1b3NsaHVmaHBxd2FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODU1MDgsImV4cCI6MjA4ODU2MTUwOH0.0WScKpedr7AB2O93bVmXXar5R8KcUPmHXyUSndIxF2o";
+    const sb = supabase.createClient(SB_URL, SB_KEY);
+    
+    let currentUsername = "guest";
+    let activeRepo = "";
+    let currentFilePath = "";
+
+    async function init() {
+        const userCookie = document.cookie.split('; ').find(row => row.startsWith('wv_user='));
+        if (userCookie) {
+            const data = JSON.parse(decodeURIComponent(userCookie.split('=')[1]));
+            currentUsername = data.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+            document.getElementById('user-display').innerText = currentUsername;
+        }
+        await fetchRepos(currentUsername);
+    }
+
+    async function fetchRepos(targetUser) {
+        const { data, error } = await sb.storage.from('sites').list(targetUser);
+        if (data) {
+            const dropdown = document.getElementById('repo-dropdown');
+            dropdown.innerHTML = `<option value="">Mounted: ${targetUser}</option>` + 
+                data.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
+        }
+    }
+
+    async function handleSearch(e) {
+        if (e.key === 'Enter') {
+            const query = e.target.value.trim(); // "user/repo"
+            if (query.includes('/')) {
+                const [targetUser, targetRepo] = query.split('/');
+                updateStatus(`MOUNTING REMOTE: ${query}`, 'pending');
+                await fetchRepos(targetUser);
+                currentUsername = targetUser; // Temporarily switch context
+                switchRepo(targetRepo);
+            }
+        }
+    }
+
+    async function switchRepo(repoName) {
+        activeRepo = repoName;
+        const treeElement = document.getElementById('file-tree');
+        treeElement.innerHTML = `<div style="padding:20px; font-size:12px;">Indexing...</div>`;
+        
+        const { data, error } = await sb.storage.from('sites').list(`${currentUsername}/${repoName}`);
+        if (data) {
+            treeElement.innerHTML = data.map(item => `
+                <div class="tree-item" onclick="loadCode('${item.name}')">
+                    <i class="fa-solid fa-file-code"></i> ${item.name}
+                </div>
+            `).join('');
+        }
+    }
+
+    async function loadCode(fileName) {
+        currentFilePath = fileName;
+        document.getElementById('welcome-view').classList.add('hidden');
+        document.getElementById('editor-view').classList.remove('hidden');
+        document.getElementById('tab-label').innerText = fileName;
+        
+        const target = `https://wolfcloud.onrender.com/${currentUsername}/${activeRepo}/${fileName}`;
+        const res = await fetch(target);
+        const code = await res.text();
+        
+        document.getElementById('code-area').innerText = code;
+        updateEditorUI();
+    }
+
+    function handleInput() { updateEditorUI(); }
+
+    function updateEditorUI() {
+        const code = document.getElementById('code-area').innerText;
+        document.getElementById('highlight-content').textContent = code;
+        Prism.highlightElement(document.getElementById('highlight-content'));
+        
+        const lines = code.split('\n').length;
+        document.getElementById('line-nums').innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
+    }
+
+    async function saveFile() {
+        const indicator = document.getElementById('sync-indicator');
+        const msg = document.getElementById('status-msg');
+        
+        // Step 1: Yellow Pulse (Pending)
+        updateStatus("SYNCING_TO_CLOUD", "pending");
+        
+        const content = document.getElementById('code-area').innerText;
+        const fullPath = `${currentUsername}/${activeRepo}/${currentFilePath}`;
+
+        const { error } = await sb.storage.from('sites').upload(fullPath, content, { upsert: true });
+
+        if (!error) {
+            // Step 2: Green Pulse (Success)
+            updateStatus("FILE_PUSHED_SUCCESSFULLY", "success");
+            setTimeout(() => updateStatus("ENGINE_IDLE", "idle"), 3000);
+        } else {
+            updateStatus("PUSH_FAILED", "error");
+        }
+    }
+
+    function updateStatus(text, type) {
+        const dot = document.getElementById('sync-indicator');
+        const msg = document.getElementById('status-msg');
+        msg.innerText = text.toUpperCase();
+        
+        dot.className = "pulse-dot";
+        if (type === 'pending') {
+            dot.style.background = "var(--pending)";
+            dot.style.boxShadow = "0 0 10px var(--pending)";
+            dot.classList.add('pulse-active');
+        } else if (type === 'success') {
+            dot.style.background = "var(--success)";
+            dot.style.boxShadow = "0 0 10px var(--success)";
+            dot.classList.add('pulse-active');
+        } else if (type === 'error') {
+            dot.style.background = "red";
+            dot.classList.remove('pulse-active');
+        } else {
+            dot.style.background = "#333";
+            dot.classList.remove('pulse-active');
+        }
+    }
+
+    function handleTab(e) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            document.execCommand('insertText', false, '    ');
+        }
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
