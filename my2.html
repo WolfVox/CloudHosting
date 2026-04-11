@@ -569,7 +569,6 @@ function syncScroll() {
         lineNums.scrollTop = editor.scrollTop;
     }
 }
-
 function handleInput() {
     const editor = document.getElementById('code-editor');
     const highlight = document.getElementById('highlight-target');
@@ -577,13 +576,18 @@ function handleInput() {
 
     let code = editor.value;
 
+    // 1. Sync Content
     // Prism fix: Ensure trailing newlines are rendered so height matches
     highlight.textContent = code + (code.endsWith('\n') ? ' ' : '');
     Prism.highlightElement(highlight);
 
-    // Update Line Numbers
-    const lineCount = code.split('\n').length * 25;
-    lineNums.innerHTML = Array.from({length: lineCount}, (_, i) => i + 1).join('<br>');
+    // 2. Update Line Numbers
+    // We split by newline to get the actual number of lines
+    const lineCount = code.split('\n').length;
+    
+    // Using a single string join is much more performant than repeated DOM injection
+    lineNums.innerHTML = Array.from({ length: lineCount }, (_, i) => `<span>${i + 1}</span>`)
+                              .join('');
 
     syncScroll();
 }
