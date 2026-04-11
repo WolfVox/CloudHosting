@@ -200,11 +200,19 @@
 /* --- UPDATED CSS --- */
 /* --- CSS FIX --- */
 /* --- CSS FIX FOR ALIGNMENT AND SCROLL --- */
+/* Ensure the wrapper is the boundary */
+.editor-container {
+    position: relative;
+    flex: 1;
+    display: flex;
+    overflow: hidden; /* Prevent double scrollbars */
+}
+
 .code-input-wrapper {
     flex: 1;
     position: relative;
-    overflow: hidden; /* Important: The children handle the scroll */
     background: var(--bg-main);
+    overflow: hidden;
 }
 
 #code-editor, #code-highlight {
@@ -214,44 +222,42 @@
     width: 100%;
     height: 100%;
     margin: 0;
-    padding: 20px; /* Padding must be identical */
+    padding: 20px !important;
+    /* CRITICAL: These must be exactly the same */
     font-family: 'JetBrains Mono', monospace !important;
     font-size: 13px !important;
-    line-height: 1.6 !important;
+    line-height: 20px !important; /* Use pixels instead of 1.6 for stability */
     tab-size: 4;
     white-space: pre;
     word-wrap: normal;
-    box-sizing: border-box; /* Fixes the character offset */
+    box-sizing: border-box;
     border: none;
     outline: none;
-    text-align: left; /* Ensures text starts at the same pixel */
+    text-align: left;
 }
 
 #code-editor {
     z-index: 2;
-    background: transparent !important; /* Make the "working" layer invisible */
-    color: transparent !important;      /* Hide the plain text */
-    caret-color: #fff;                  /* Keep the blinking cursor visible */
+    background: transparent !important;
+    color: transparent !important;
+    caret-color: #fff;
     resize: none;
-    overflow: auto; 
-    white-space: pre;
-    word-wrap: normal;
+    overflow: auto; /* The master scrollbar */
 }
 
 #code-highlight {
-    z-index: 1;                         /* Put the "colored" layer behind */
-    pointer-events: none;               /* Important: clicks pass through to textarea */
+    z-index: 1;
+    pointer-events: none;
     background: var(--bg-main);
-    color: var(--text-main);            /* Make this one visible! */
-    overflow: hidden;                   /* Controlled by JS */
+    overflow: hidden; /* Locked to editor scroll */
 }
 
-/* Ensure Prism doesn't inject its own padding/margins */
+/* Fix Prism's internal spacing */
 #code-highlight code {
+    display: block;
     padding: 0 !important;
     margin: 0 !important;
-    font-family: inherit !important;
-    background: transparent !important;
+    line-height: inherit !important;
 }
 
         /* --- FOOTER & STATUS --- */
@@ -408,14 +414,12 @@
                 <div class="line-numbers" id="line-numbers">1</div>
                 <div class="code-input-wrapper" id="editor-wrapper" onscroll="syncScroll()">
                     <pre id="code-highlight" aria-hidden="true"><code class="language-javascript" id="highlight-target"></code></pre>
-                    <textarea 
+<textarea 
     id="code-editor" 
     spellcheck="false" 
     oninput="handleInput()" 
-    onkeydown="handleKey(event)" 
     onscroll="syncScroll()"
-    onselect="syncScroll()"
-    onmouseup="syncScroll()">
+    onkeydown="handleKey(event)">
 </textarea>
                 </div>
             </div>
@@ -560,12 +564,12 @@ function syncScroll() {
     const highlight = document.getElementById('code-highlight');
     const lineNums = document.getElementById('line-numbers');
     
-    // This "teleports" the visible code to match the invisible textarea exactly
-    highlight.scrollTop = editor.scrollTop;
-    highlight.scrollLeft = editor.scrollLeft;
-    
-    // Move line numbers vertically
-    lineNums.scrollTop = editor.scrollTop;
+    // Use requestAnimationFrame for buttery smooth sync
+    window.requestAnimationFrame(() => {
+        highlight.scrollTop = editor.scrollTop;
+        highlight.scrollLeft = editor.scrollLeft;
+        lineNums.scrollTop = editor.scrollTop;
+    });
 }
 
 function handleInput() {
@@ -575,18 +579,15 @@ function handleInput() {
 
     let code = editor.value;
     
-    // Add a space if the last character is a newline so the height stays synced
-    // This prevents the "jumping" glitch at the bottom of the file
+    // Add a space at the end to prevent the "jumping height" bug
     highlight.textContent = code + (code.endsWith('\n') ? ' ' : '');
     
-    // Apply the colors
     Prism.highlightElement(highlight);
     
-    // Update Line Numbers
+    // Line Numbers
     const lines = code.split('\n').length;
     lineNums.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
     
-    // Immediately sync scroll after input (fixes Ctrl+A / Backspace glitches)
     syncScroll();
 }
 
