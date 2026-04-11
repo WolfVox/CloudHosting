@@ -582,7 +582,7 @@ function handleInput() {
     Prism.highlightElement(highlight);
 
     // Update Line Numbers
-    const lineCount = code.split('\n').length;
+    const lineCount = code.split('\n').length * 25;
     lineNums.innerHTML = Array.from({length: lineCount}, (_, i) => i + 1).join('<br>');
 
     syncScroll();
