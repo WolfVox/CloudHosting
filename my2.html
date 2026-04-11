@@ -502,37 +502,36 @@
         }
     }
 
-function handleInput() {
-    const editor = document.getElementById('code-editor');
-    const highlight = document.getElementById('highlight-target');
-    const pre = document.getElementById('code-highlight');
-    const lineNums = document.getElementById('line-numbers');
+    async function openFile(fileName) {
+        activeFile = fileName;
+        updateStatus("FETCHING_ASSET", "pending");
+        
+        document.getElementById('welcome-view').classList.add('hidden');
+        document.getElementById('editor-view').classList.remove('hidden');
+        
+        // Update breadcrumb
+        document.getElementById('path-user').innerText = activeUser;
+        document.getElementById('path-repo').innerText = activeRepo;
+        document.getElementById('path-file').innerText = fileName;
 
-    let code = editor.value;
-    if(code[code.length-1] === "\n") code += " "; 
-    
-    highlight.textContent = code;
-    Prism.highlightElement(highlight);
-
-    // --- THE FIX ---
-    // 1. Reset height to calculate accurately
-    editor.style.height = 'auto'; 
-    
-    // 2. Set height to the scrollHeight (total height of text)
-    const newHeight = editor.scrollHeight + 'px';
-    editor.style.height = newHeight;
-    pre.style.height = newHeight;
-    
-    // 3. Sync line numbers container height
-    lineNums.style.height = newHeight;
-
-    // Update Line Numbers content
-    const count = code.split('\n').length;
-    lineNums.innerHTML = Array.from({length: count}, (_, i) => i + 1).join('<br>');
-    
-    // Size info
-    const bytes = new Blob([code]).size;
-    document.getElementById('file-size-info').innerText = (bytes / 1024).toFixed(2) + " KB";
+        try {
+            const url = `https://wolfcloud.onrender.com/${activeUser}/${activeRepo}/${fileName}`;
+            const res = await fetch(url);
+            const content = await res.text();
+            
+            const editor = document.getElementById('code-editor');
+            editor.value = content;
+            
+            // Detect Syntax
+            const ext = fileName.split('.').pop();
+            document.getElementById('syntax-info').innerText = ext.toUpperCase();
+            
+            handleInput();
+            updateStatus("FILE_READY", "success");
+            setTimeout(() => updateStatus("IDLE", "idle"), 2000);
+        } catch (e) {
+            updateStatus("FETCH_FAILED", "error");
+        }
 }
 
     // --- EDITOR CORE ---
