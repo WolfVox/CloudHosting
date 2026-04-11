@@ -214,7 +214,8 @@
     width: 100%;
     height: 100%;
     margin: 0;
-    padding: 20px; /* Padding must be identical */
+    padding: 20px; /* Padding must be identical */ 
+    padding-bottom: 80px;
     font-family: 'JetBrains Mono', monospace !important;
     font-size: 13px !important;
     line-height: 1.6 !important;
@@ -583,11 +584,11 @@ function handleInput() {
 
     // 2. Update Line Numbers
     // We split by newline to get the actual number of lines
-// Update Line Numbers
-const actualLineCount = code.split('\n').length;
-const totalLineCount = actualLineCount + 125; // Add your extra 50 lines here
-
-lineNums.innerHTML = Array.from({ length: totalLineCount }, (_, i) => i + 1).join('<br>');
+    const lineCount = code.split('\n').length;
+    
+    // Using a single string join is much more performant than repeated DOM injection
+    lineNums.innerHTML = Array.from({ length: lineCount }, (_, i) => `<span>${i + 1}</span>`)
+                              .join('');
 
     syncScroll();
 }
