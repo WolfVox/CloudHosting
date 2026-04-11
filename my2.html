@@ -202,42 +202,49 @@
 .code-input-wrapper {
     flex: 1;
     position: relative;
-    overflow: auto !important; /* Forces the main container to handle scrolling */
+    overflow: hidden; /* We handle scrolling inside the children now */
     background: var(--bg-main);
-    display: block;
 }
 
 #code-editor, #code-highlight {
     position: absolute;
-    top: 0; 
+    top: 0;
     left: 0;
-    min-width: 100%;
-    /* Remove fixed height: 100% so they can grow */
-    height: auto; 
+    width: 100%;
+    height: 100%; /* Fill the container */
     margin: 0;
     padding: 20px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'JetBrains Mono', monospace; /* Must be identical */
     font-size: 13px;
     line-height: 1.6;
+    tab-size: 4;
     white-space: pre;
     word-wrap: normal;
-    overflow: hidden; /* Hide internal scrolls; let wrapper handle it */
-    box-sizing: border-box;
+    box-sizing: border-box; /* Crucial for alignment */
+    border: none;
+    outline: none;
 }
 
 #code-editor {
     z-index: 2;
     background: transparent;
     color: transparent;
-    caret-color: #fff;
+    caret-color: #fff; /* Makes cursor visible */
     resize: none;
+    overflow: auto; /* Allow the textarea to scroll */
 }
 
 #code-highlight {
     z-index: 1;
-    pointer-events: none;
+    pointer-events: none; /* Ignore mouse clicks */
     background: var(--bg-main);
-    overflow: hidden; /* Let the wrapper handle the scroll */
+    overflow: hidden; /* Controlled by JS syncScroll */
+}
+
+/* Ensure Prism doesn't add its own background or padding */
+#code-highlight code {
+    padding: 0 !important;
+    background: transparent !important;
 }
 
         /* --- FOOTER & STATUS --- */
@@ -538,46 +545,36 @@
 function handleInput() {
     const editor = document.getElementById('code-editor');
     const highlight = document.getElementById('highlight-target');
-    const pre = document.getElementById('code-highlight');
     const lineNums = document.getElementById('line-numbers');
 
     let code = editor.value;
-    // Add extra space at the end to prevent the "jumping" cursor glitch
-    if(code[code.length-1] === "\n") code += ""; 
     
-    highlight.textContent = code;
+    // Prism requires a trailing newline to render correctly when typing at the bottom
+    highlight.textContent = code + (code.endsWith('\n') ? ' ' : '');
     Prism.highlightElement(highlight);
     
-    // 1. Reset height to shrink if text was deleted
-    editor.style.height = 'auto'; 
-    
-    // 2. Set new height based on content
-    const fullHeight = editor.scrollHeight*90 + 'px';
-    editor.style.height = fullHeight;
-    pre.style.height = fullHeight;
-    
-    // 3. Sync Line Numbers height
-    lineNums.style.height = fullHeight;
-
-    // Update Line Numbers content
+    // Update Line Numbers
     const count = code.split('\n').length;
     lineNums.innerHTML = Array.from({length: count}, (_, i) => i + 1).join('<br>');
 
     // Update Size Info
     const bytes = new Blob([code]).size;
     document.getElementById('file-size-info').innerText = (bytes / 1024).toFixed(2) + " KB";
+    
+    syncScroll(); // Ensure highlight matches immediately
 }
 
-    function syncScroll() {
-        const wrapper = document.getElementById('editor-wrapper');
-        const lines = document.getElementById('line-numbers');
-        const highlight = document.getElementById('code-highlight');
-        
-        // Keep layers in perfect sync
-        highlight.scrollTop = wrapper.scrollTop;
-        highlight.scrollLeft = wrapper.scrollLeft;
-        lines.scrollTop = wrapper.scrollTop;
-    }
+function syncScroll() {
+    const editor = document.getElementById('code-editor');
+    const highlight = document.getElementById('code-highlight');
+    const lineNums = document.getElementById('line-numbers');
+    
+    // The textarea is the master of scrolling
+    highlight.scrollTop = editor.scrollTop;
+    highlight.scrollLeft = editor.scrollLeft;
+    lineNums.scrollTop = editor.scrollTop;
+}
+
 
     function handleKey(e) {
         if (e.key === 'Tab') {
