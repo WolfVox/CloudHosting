@@ -198,42 +198,39 @@
         }
 
 /* --- UPDATED CSS --- */
+/* --- CSS FIX --- */
 .code-input-wrapper {
     flex: 1;
     position: relative;
-    overflow: auto; /* The wrapper handles the scrollbars */
+    overflow: auto !important; /* Forces the main container to handle scrolling */
     background: var(--bg-main);
+    display: block;
 }
 
 #code-editor, #code-highlight {
     position: absolute;
     top: 0; 
     left: 0;
-    width: 100%;
-    height: 100%;
+    min-width: 100%;
+    /* Remove fixed height: 100% so they can grow */
+    height: auto; 
     margin: 0;
     padding: 20px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 13px;
     line-height: 1.6;
-    tab-size: 4;
     white-space: pre;
     word-wrap: normal;
-    border: none;
+    overflow: hidden; /* Hide internal scrolls; let wrapper handle it */
     box-sizing: border-box;
-    display: block;
 }
 
 #code-editor {
+    z-index: 2;
     background: transparent;
     color: transparent;
     caret-color: #fff;
     resize: none;
-    outline: none;
-    z-index: 2;
-    /* Important: textarea must grow to content so wrapper scrolls it */
-    overflow: hidden; 
-    min-height: 100%;
 }
 
 #code-highlight {
@@ -545,22 +542,28 @@ function handleInput() {
     const lineNums = document.getElementById('line-numbers');
 
     let code = editor.value;
+    // Add extra space at the end to prevent the "jumping" cursor glitch
     if(code[code.length-1] === "\n") code += " "; 
     
     highlight.textContent = code;
     Prism.highlightElement(highlight);
 
-    // --- FIX: Sync heights so scrollbars appear ---
-    // We match the height of the textarea to its scrollHeight
+    // 1. Reset height to shrink if text was deleted
     editor.style.height = 'auto'; 
-    editor.style.height = editor.scrollHeight + 'px';
-    pre.style.height = editor.scrollHeight + 'px';
+    
+    // 2. Set new height based on content
+    const fullHeight = editor.scrollHeight + 'px';
+    editor.style.height = fullHeight;
+    pre.style.height = fullHeight;
+    
+    // 3. Sync Line Numbers height
+    lineNums.style.height = fullHeight;
 
-    // Update Line Numbers
+    // Update Line Numbers content
     const count = code.split('\n').length;
     lineNums.innerHTML = Array.from({length: count}, (_, i) => i + 1).join('<br>');
 
-    // Update Size
+    // Update Size Info
     const bytes = new Blob([code]).size;
     document.getElementById('file-size-info').innerText = (bytes / 1024).toFixed(2) + " KB";
 }
@@ -633,6 +636,19 @@ function handleInput() {
     }
 
     window.onload = boot;
+
+    function updateEditorHeight() {
+    const editor = document.getElementById('code-editor');
+    const highlight = document.getElementById('code-highlight');
+    
+    // Reset height to calculate correctly
+    editor.style.height = '50px'; 
+    
+    // Set height to the full scrollable height of the content
+    const newHeight = editor.scrollHeight + 20; 
+    editor.style.height = newHeight + 'px';
+    highlight.style.height = newHeight + 'px';
+}
 </script>
 </body>
 </html>
