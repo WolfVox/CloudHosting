@@ -3,23 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WolfVox Pro | Advanced Repository Engine</title>
+    <title>WolfCloud Pro | Advanced Repository Engine</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
     
     <style>
         :root {
-            --bg-main: #000000; /* GitHub Dark Dimmed */
-            --bg-side: #000000;
-            --bg-hover: #171818;
-            --border: #727272;
-            --accent: #bc8cff; /* WolfVox Purple */
+            --bg-main: #0d1117;
+            --bg-side: #010409;
+            --bg-header: #161b22;
+            --border: #30363d;
+            --accent: #f38020;
+            --accent-soft: rgba(243, 128, 32, 0.15);
             --text-main: #c9d1d9;
-            --text-bright: #ffffff;
             --text-muted: #8b949e;
-            --syntax-bg: #000000;
             --success: #238636;
+            --pending: #d29922;
+            --error: #f85149;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -29,76 +31,111 @@
             color: var(--text-main); 
             height: 100vh; 
             display: flex; 
-            flex-direction: column;
-            overflow: hidden;
+            flex-direction: column; 
+            overflow: hidden; 
         }
 
-        /* --- TOP GLOBAL HEADER --- */
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 14px; height: 14px; }
+        ::-webkit-scrollbar-track { background: var(--bg-side); }
+        ::-webkit-scrollbar-thumb { background: #30363d; border: 3px solid var(--bg-side); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+        /* --- NAVIGATION --- */
         header {
-            height: 65px;
-            background: var(--bg-side);
+            height: 60px;
+            background: var(--bg-header);
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             padding: 0 20px;
             gap: 20px;
-            z-index: 100;
+            z-index: 1000;
         }
-        .logo { font-weight: 800; font-size: 22px; color: var(--text-bright); display: flex; align-items: center; gap: 10px; cursor: pointer; }
-        .logo i { color: var(--accent); font-size: 28px; }
-        
-        .search-container { flex: 1; max-width: 500px; position: relative; }
-        .search-container input {
+
+        .logo-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 18px;
+            color: #fff;
+            cursor: pointer;
+            min-width: 180px;
+        }
+
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+            max-width: 450px;
+        }
+
+        .search-input {
             width: 100%;
             background: var(--bg-main);
             border: 1px solid var(--border);
             border-radius: 6px;
-            padding: 8px 12px 8px 35px;
+            padding: 6px 12px 6px 35px;
             color: #fff;
-            outline: none;
             font-size: 13px;
+            outline: none;
+            transition: 0.2s;
         }
-        .search-container i { position: absolute; left: 12px; top: 10px; color: var(--text-muted); }
+        .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 
-        .header-actions { display: flex; align-items: center; gap: 15px; margin-left: auto; }
-        .user-pill {
-            background: var(--bg-hover);
+        .search-dropdown {
+            position: absolute;
+            top: 40px; left: 0; right: 0;
+            background: var(--bg-header);
             border: 1px solid var(--border);
-            padding: 5px 12px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            font-weight: 600;
+            border-radius: 6px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 9999;
         }
 
-        /* --- MAIN VIEWPORT --- */
+        .search-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        .search-item:hover { background: var(--bg-main); }
+
+        /* --- MAIN LAYOUT --- */
         .viewport { display: flex; flex: 1; overflow: hidden; }
 
-        /* --- SIDEBAR --- */
         aside {
-            width: 320px;
+            width: 300px;
             background: var(--bg-side);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
         }
-        .sidebar-ctrl { padding: 15px; border-bottom: 1px solid var(--border); }
-        .repo-select {
-            width: 100%;
-            background: var(--bg-hover);
-            border: 1px solid var(--border);
-            color: #fff;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 13px;
-            margin-bottom: 10px;
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .tree-view { flex: 1; overflow-y: auto; padding: 10px 0; }
+        .repo-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 8px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .tree-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+
         .tree-item {
-            padding: 6px 20px;
+            padding: 6px 16px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -107,123 +144,151 @@
             color: var(--text-main);
             transition: 0.1s;
         }
-        .tree-item:hover { background: var(--bg-hover); }
-        .tree-item.active { background: #1f2937; border-left: 3px solid var(--accent); color: var(--accent); }
-        .tree-item i { width: 16px; text-align: center; font-size: 14px; }
-        .tree-item.folder i { color: #e3b341; }
-        .tree-item.file i { color: var(--text-muted); }
+        .tree-item:hover { background: var(--bg-header); }
+        .tree-item.active { background: #1f2937; color: var(--accent); border-left: 2px solid var(--accent); }
+        .tree-item i { width: 16px; text-align: center; }
 
         /* --- CONTENT AREA --- */
-        main { flex: 1; display: flex; flex-direction: column; background: var(--bg-main); overflow: hidden; }
-
-        .breadcrumb-bar {
-            padding: 12px 25px;
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             background: var(--bg-main);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            font-size: 13px;
-            gap: 10px;
+            position: relative;
         }
-        .breadcrumb-bar a { color: #58a6ff; text-decoration: none; font-weight: 600; }
-        .breadcrumb-bar span { color: var(--text-muted); }
 
-        .editor-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        
-        /* THE CODE EDITOR UI */
-        .editor-header {
-            height: 45px;
-            background: #161b22;
+        .editor-top-bar {
+            background: var(--bg-side);
             border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            height: 48px;
             display: flex;
             align-items: center;
-            padding: 0 20px;
             justify-content: space-between;
         }
-        .tab {
-            background: var(--bg-main);
-            padding: 8px 20px;
-            border: 1px solid var(--border);
-            border-bottom: none;
-            border-radius: 6px 6px 0 0;
-            font-size: 12px;
+
+        .breadcrumb {
+            font-size: 13px;
             display: flex;
-            align-items: center;
             gap: 8px;
-            margin-top: 10px;
+            align-items: center;
+        }
+        .breadcrumb b { color: #58a6ff; cursor: pointer; }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
         }
 
-/* New Editor Styles */
-.code-view { position: relative; }
-
-#code-area {
-    flex: 1;
-    padding: 20px;
-    color: transparent; /* Text is transparent because Prism sits behind/in front */
-    caret-color: #fff; /* But we need to see the cursor */
-    background: transparent;
-    z-index: 2;
-    white-space: pre;
-    tab-size: 4;
-}
-
-#highlight-layer {
-    position: absolute;
-    top: 20px;
-    left: 70px; /* Offset for line numbers */
-    right: 20px;
-    bottom: 20px;
-    pointer-events: none;
-    z-index: 1;
-    white-space: pre;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    line-height: 1.6;
-}
-
-/* Prism Theme Overrides (Dark) */
-.token.keyword { color: #ff7b72; }
-.token.function { color: #d2a8ff; }
-.token.string { color: #a5d6ff; }
-.token.comment { color: #8b949e; }
-.token.operator { color: #ff7b72; }
-.token.boolean { color: #79c0ff; }
+        /* --- THE PROFESSIONAL EDITOR ENGINE --- */
         .line-numbers {
             width: 50px;
-            background: #050505;
-            color: #3b424d;
+            background: var(--bg-side);
+            border-right: 1px solid var(--border);
+            padding: 20px 0;
             text-align: right;
-            padding: 20px 10px;
+            color: #484f58;
             font-family: 'JetBrains Mono', monospace;
             font-size: 12px;
-            user-select: none;
-            border-right: 1px solid #111;
-        }
-        .code-area {
-            flex: 1;
-            padding: 20px;
-            color: #d1d5db;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
             line-height: 1.6;
-            white-space: pre;
-            outline: none;
+            user-select: none;
+            overflow: hidden;
         }
 
-        /* --- FOOTER STATUS --- */
+/* --- UPDATED CSS --- */
+/* --- CSS FIX --- */
+/* --- CSS FIX FOR ALIGNMENT AND SCROLL --- */
+.code-input-wrapper {
+    flex: 1;
+    position: relative;
+    overflow: hidden; /* Important: The children handle the scroll */
+    background: var(--bg-main);
+}
+
+#code-editor, #code-highlight {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 20px; /* Padding must be identical */ 
+    padding-bottom: 80px;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+    tab-size: 4;
+    white-space: pre;
+    word-wrap: normal;
+    box-sizing: border-box; /* Fixes the character offset */
+    border: none;
+    outline: none;
+    text-align: left; /* Ensures text starts at the same pixel */
+}
+
+#code-editor {
+    z-index: 2;
+    background: transparent !important; /* Make the "working" layer invisible */
+    color: transparent !important;      /* Hide the plain text */
+    caret-color: #fff;                  /* Keep the blinking cursor visible */
+    resize: none;
+    overflow: auto; 
+    white-space: pre;
+    word-wrap: normal;
+}
+
+#code-highlight {
+    z-index: 1;                         /* Put the "colored" layer behind */
+    pointer-events: none;               /* Important: clicks pass through to textarea */
+    background: var(--bg-main);
+    color: var(--text-main);            /* Make this one visible! */
+    overflow: hidden;                   /* Controlled by JS */
+}
+
+/* Ensure Prism doesn't inject its own padding/margins */
+#code-highlight code {
+    padding: 0 !important;
+    margin: 0 !important;
+    font-family: inherit !important;
+    background: transparent !important;
+}
+
+        /* --- FOOTER & STATUS --- */
         footer {
-            height: 30px;
-            background: var(--accent);
-            color: #000;
+            height: 32px;
+            background: var(--bg-header);
+            border-top: 1px solid var(--border);
             display: flex;
             align-items: center;
             padding: 0 15px;
             font-size: 11px;
-            font-weight: 700;
             justify-content: space-between;
         }
 
-        /* BUTTONS */
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pulse-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #30363d;
+        }
+
+        .pulse-active {
+            animation: pulse-animation 1.5s infinite;
+        }
+
+        @keyframes pulse-animation {
+            0% { box-shadow: 0 0 0 0px rgba(243, 128, 32, 0.4); }
+            100% { box-shadow: 0 0 0 10px rgba(243, 128, 32, 0); }
+        }
+
         .btn {
             background: #21262d;
             border: 1px solid var(--border);
@@ -233,40 +298,59 @@
             font-size: 12px;
             cursor: pointer;
             font-weight: 600;
-            transition: 0.2s;
+            transition: 0.1s;
             display: flex;
             align-items: center;
             gap: 6px;
         }
         .btn:hover { background: #30363d; border-color: #8b949e; }
-        .btn-green { background: var(--success); color: #fff; border: none; }
-        .btn-green:hover { background: #2ea043; }
+        .btn-primary { background: var(--success); color: #fff; border: none; }
+        .btn-primary:hover { background: #2ea043; }
+
+        /* --- WELCOME & INFO VIEW --- */
+        #welcome-view {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .info-card {
+            background: var(--bg-side);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+            margin-top: 20px;
+            text-align: left;
+        }
 
         .hidden { display: none !important; }
-        .loading-shimmer { color: var(--accent); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
     </style>
 </head>
 <body>
 
 <header>
-    <div class="logo" onclick="location.href='https://wolfvox.github.io/CloudHosting'">
-        <img src="https://github.com/WolfVox/Logos/blob/main/WolfCloud.png?raw=true" alt="" width="45px" height="45px">
-        <
-        <span>Console</span>
-    </div>
-    
-    <div class="search-container">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" placeholder="Search files, commits, or repos...">
+    <div class="logo-box" onclick="location.reload()">
+        <img src="https://github.com/WolfVox/Logos/blob/main/WolfCloud.png?raw=true" width="32" height="32">
+        WolfCloud <span style="font-weight:300; opacity:0.6;">Console</span>
     </div>
 
-    <div class="header-actions">
-        <button onclick="window.location='https://wolfvox.github.io/CloudHosting/create'" class="btn" title="Create New File"><i class="fa-solid fa-plus"></i></button>
-        <button onclick="window.location='https://github.com/wolfvox'" class="btn"><i class="fa-solid fa-bell"></i></button>
-        <div class="user-pill">
-            <i class="fa-solid fa-circle-user"></i>
+    <div class="search-wrapper">
+        <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:12px; top:10px; color:var(--text-muted); font-size:12px;"></i>
+        <input type="text" class="search-input" id="search-input" placeholder="Find user / repository..." oninput="globalSearch(this.value)">
+        <div id="search-dropdown" class="search-dropdown"></div>
+    </div>
+
+    <div style="margin-left:auto; display:flex; gap:12px; align-items:center;">
+        <button class="btn"><i class="fa-solid fa-plus"></i> New</button>
+        <div class="btn" style="border-radius:20px; background:var(--bg-side);">
+            <i class="fa-solid fa-user-circle"></i>
             <span id="user-display">guest_user</span>
         </div>
     </div>
@@ -274,316 +358,316 @@
 
 <div class="viewport">
     <aside>
-        <div class="sidebar-ctrl">
-            <span style="font-size: 10px; color: var(--text-muted); font-weight: 800; display: block; margin-bottom: 8px;">ACTIVE CONTEXT</span>
-            <select class="repo-select" id="repo-dropdown" onchange="switchRepo(this.value)">
-                <option value="">Select Repository...</option>
+        <div class="sidebar-header">
+            <span style="font-size:10px; font-weight:800; color:var(--text-muted); letter-spacing:1px;">REPOSITORIES</span>
+            <select id="repo-select" onchange="loadRepository(this.value)" style="width:100%; margin-top:10px; background:var(--bg-main); border:1px solid var(--border); color:#fff; padding:6px; border-radius:4px; font-size:13px;">
+                <option value="">Select a project...</option>
             </select>
-            <button class="btn" style="width: 100%; justify-content: center; background: transparent;">
-                <i class="fa-solid fa-code-branch"></i> main
-            </button>
+            <div class="repo-meta" id="repo-meta">
+                <span><i class="fa-solid fa-code-branch"></i> main</span>
+                <span><i class="fa-solid fa-database"></i> 0 files</span>
+            </div>
         </div>
 
-        <div class="tree-view" id="file-tree">
-            <div style="padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 12px;">
-                <i class="fa-solid fa-folder-tree" style="font-size: 30px; margin-bottom: 10px; display: block; opacity: 0.3;"></i>
-                Choose a repository to browse the file system.
+        <div class="tree-container" id="file-tree">
+            <div style="padding:40px 20px; text-align:center; opacity:0.3;">
+                <i class="fa-solid fa-folder-tree" style="font-size:32px;"></i>
+                <p style="font-size:11px; margin-top:10px;">Select a repository to explore.</p>
             </div>
         </div>
     </aside>
 
     <main>
-        <div id="welcome-view" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.5;">
-            <i class="fa-solid fa-laptop-code" style="font-size: 80px; margin-bottom: 20px;"></i>
-            <h2 style="font-weight: 300;">Ready to Engineer.</h2>
-            <p style="font-size: 13px; margin-top: 10px;">Select a file from the tree to begin live-fetching.</p>
+        <div id="welcome-view">
+            <i class="fa-solid fa-laptop-code" style="font-size:64px; color:var(--accent); opacity:0.8;"></i>
+            <h1 style="margin-top:20px; font-weight:800;">WolfCloud Engine v1.5</h1>
+            <p style="color:var(--text-muted); margin-top:10px;">The definitive cloud-hosting interface for the WolfVox Ecosystem.</p>
+            
+            <div class="info-card">
+                <h3 style="font-size:14px; margin-bottom:10px;"><i class="fa-solid fa-circle-info"></i> System Instructions</h3>
+                <ul style="font-size:12px; color:var(--text-muted); line-height:1.8; padding-left:15px;">
+                    <li><b>Global Access:</b> Type <code style="color:var(--accent);">username/repo</code> in search to mount remote data.</li>
+                    <li><b>Live Sync:</b> Files are fetched directly from our Render Edge Node.</li>
+                    <li><b>Data Safety:</b> Saves are atomic. Overwrites occur only on "Push Changes".</li>
+                </ul>
+            </div>
         </div>
 
-        <div id="editor-view" class="hidden editor-wrapper">
-            <div class="breadcrumb-bar" id="breadcrumb">
+        <div id="editor-view" class="hidden" style="flex:1; display:flex; flex-direction:column;">
+            <div class="editor-top-bar">
+                <div class="breadcrumb" id="breadcrumb">
+                    <i class="fa-solid fa-book" style="opacity:0.5;"></i>
+                    <b id="path-user">user</b> / <b id="path-repo">repo</b> / <span id="path-file" style="color:var(--text-muted);">file.js</span>
                 </div>
-
-            <div class="editor-header">
-                <div class="tab">
-                    <i class="fa-solid fa-file-lines" style="color: var(--accent);"></i>
-                    <span id="tab-name">filename.js</span>
-                    <div style="display: flex; gap: 8px;">
-    <button class="btn btn-green" onclick="saveFile()">
-        <i class="fa-solid fa-floppy-disk"></i> Save
-    </button>
-    <button class="btn" onclick="copyCode()"><i class="fa-solid fa-copy"></i> Copy</button>
-    <a id="live-link" target="_blank" class="btn"><i class="fa-solid fa-rocket"></i> View</a>
-</div>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn" onclick="copyCode()"><i class="fa-solid fa-copy"></i> Copy</button>
-                    <a id="live-link" target="_blank" class="btn btn-green"><i class="fa-solid fa-rocket"></i> Go Live</a>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" onclick="copySource()"><i class="fa-solid fa-copy"></i> Copy</button>
+                    <button class="btn btn-primary" onclick="pushChanges()"><i class="fa-solid fa-cloud-arrow-up"></i> Push Changes</button>
                 </div>
             </div>
 
-<div class="code-view">
-    <div class="line-numbers" id="line-nums">1</div>
-    <pre id="highlight-layer" aria-hidden="true"><code class="language-javascript" id="highlight-content"></code></pre>
-    <div id="code-area" 
-         class="code-area" 
-         contenteditable="true" 
-         spellcheck="false" 
-         oninput="handleInput()"
-         onkeydown="handleTab(event)">
-    </div>
-</div>
+            <div class="editor-container">
+                <div class="line-numbers" id="line-numbers">1</div>
+                <div class="code-input-wrapper" id="editor-wrapper" onscroll="syncScroll()">
+                    <pre id="code-highlight" aria-hidden="true"><code class="language-javascript" id="highlight-target"></code></pre>
+                    <textarea 
+    id="code-editor" 
+    spellcheck="false" 
+    oninput="handleInput()" 
+    onkeydown="handleKey(event)" 
+    onscroll="syncScroll()"
+    onselect="syncScroll()"
+    onmouseup="syncScroll()">
+</textarea>
+                </div>
+            </div>
         </div>
     </main>
 </div>
 
 <footer>
-    <div id="status-left"><i class="fa-solid fa-link"></i> RENDER_STATUS: CONNECTED</div>
-    <div id="status-right">UTF-8 | LF | JavaScript</div>
+    <div class="status-pill">
+        <div id="status-pulse" class="pulse-indicator"></div>
+        <span id="status-msg" style="font-family:'JetBrains Mono';">READY_STATE: IDLE</span>
+    </div>
+    <div class="status-pill" style="opacity:0.6;">
+        <span id="file-size-info">0 KB</span>
+        <span style="margin:0 10px;">|</span>
+        <span id="syntax-info">Plain Text</span>
+    </div>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-    // --- CORE CONFIGURATION ---
+    // --- CONFIG ---
     const SB_URL = "https://lqdrtozuoslhufhpqwae.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZHJ0b3p1b3NsaHVmaHBxd2FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODU1MDgsImV4cCI6MjA4ODU2MTUwOH0.0WScKpedr7AB2O93bVmXXar5R8KcUPmHXyUSndIxF2o";
-    const CLOUD_URL = "https://wolfcloud.onrender.com";
+    const sb = supabase.createClient(SB_URL, SB_KEY);
 
-    let sb;
-    let username = "guest";
+    let authUser = "guest";
+    let activeUser = "guest";
     let activeRepo = "";
-    let currentPath = "";
+    let activeFile = "";
 
-    // --- INITIALIZATION ---
-// --- INITIALIZATION ---
-async function init() {
-    console.log("System: Booting Kernal 5.0...");
-    
-    // 1. Authenticate User from Cookie
-    const userCookie = document.cookie.split('; ').find(row => row.startsWith('wv_user='));
-    
-    if (userCookie) {
-        try {
-            const data = JSON.parse(decodeURIComponent(userCookie.split('=')[1]));
-            
-            /** * FIX: Extract the Gmail ID (userid) from the email 
-             * instead of using the Display Name (data.name)
-             */
-            if (data.email) {
-                username = data.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-            } else {
-                // Fallback to name if email is missing, but sanitize it
-                username = data.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-            }
-            
-            // Set the UI badge to show the @userid
-            document.getElementById('user-display').innerText = `@${username}`;
-            
-        } catch(e) { 
-            console.warn("Session Corrupt or Cookie missing email field"); 
-            document.getElementById('user-display').innerText = "error_auth";
+    // --- INIT ---
+    async function boot() {
+        const userCookie = document.cookie.split('; ').find(row => row.startsWith('wv_user='));
+        if (userCookie) {
+            try {
+                const data = JSON.parse(decodeURIComponent(userCookie.split('=')[1]));
+                authUser = data.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+                activeUser = authUser;
+                document.getElementById('user-display').innerText = `@${authUser}`;
+            } catch(e) {}
         }
-    } else {
-        // If no cookie, you might want to redirect to login
-        console.warn("No active session found.");
-        document.getElementById('user-display').innerText = "guest_session";
+        await fetchLocalRepos();
     }
 
-    sb = supabase.createClient(SB_URL, SB_KEY);
-
-    // 2. Fetch Repositories for this specific User ID
-    await fetchRepos();
-
-    // 3. Auto-load repo if in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('repo')) {
-        const repoFromUrl = urlParams.get('repo');
-        document.getElementById('repo-dropdown').value = repoFromUrl;
-        switchRepo(repoFromUrl);
+    async function fetchLocalRepos() {
+        const { data } = await sb.storage.from('sites').list(activeUser);
+        const select = document.getElementById('repo-select');
+        if(data) {
+            select.innerHTML = '<option value="">Select a repository...</option>' + 
+                data.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
+        }
     }
-}
 
-    // --- REPOSITORY LOGIC ---
-    async function fetchRepos() {
-        const { data, error } = await sb.storage.from('sites').list(username);
-        const dropdown = document.getElementById('repo-dropdown');
-
-        if (error) {
-            updateStatus("Supabase Auth Error", "err");
+    // --- SEARCH LOGIC ---
+    async function globalSearch(val) {
+        const drop = document.getElementById('search-dropdown');
+        if (!val.includes('/')) {
+            drop.style.display = 'none';
             return;
         }
 
-        dropdown.innerHTML = '<option value="">Select Repository...</option>' + 
-            data.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
+        const [usr, rep] = val.split('/');
+        drop.innerHTML = '<div class="search-item">Searching registry...</div>';
+        drop.style.display = 'block';
+
+        const { data } = await sb.storage.from('sites').list(usr);
+        if (data && data.length > 0) {
+            const matches = data.filter(r => r.name.toLowerCase().includes(rep.toLowerCase()));
+            drop.innerHTML = matches.map(m => `
+                <div class="search-item" onclick="mountRemote('${usr}', '${m.name}')">
+                    <span><i class="fa-solid fa-book"></i> ${usr}/<b>${m.name}</b></span>
+                    <span style="opacity:0.5;">Edge Project</span>
+                </div>
+            `).join('');
+        } else {
+            drop.innerHTML = '<div class="search-item">No repositories found.</div>';
+        }
     }
 
-    async function switchRepo(repoName) {
+    function mountRemote(u, r) {
+        activeUser = u;
+        activeRepo = r;
+        document.getElementById('search-dropdown').style.display = 'none';
+        document.getElementById('search-input').value = `${u}/${r}`;
+        loadRepository(r);
+    }
+
+    // --- REPO & FILE ENGINE ---
+    async function loadRepository(repoName) {
         if (!repoName) return;
         activeRepo = repoName;
-        currentPath = ""; // Reset to root
+        const tree = document.getElementById('file-tree');
+        tree.innerHTML = '<div style="padding:20px; font-size:12px;">Initializing bucket sync...</div>';
         
-        // Update URL without reloading
-        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?repo=' + repoName;
-        window.history.pushState({path:newUrl},'',newUrl);
-
-        await loadTree(repoName, "");
+        const { data } = await sb.storage.from('sites').list(`${activeUser}/${repoName}`);
+        if (data) {
+            document.getElementById('repo-meta').innerHTML = `<span><i class="fa-solid fa-code-branch"></i> main</span> <span><i class="fa-solid fa-database"></i> ${data.length} files</span>`;
+            tree.innerHTML = data.map(f => `
+                <div class="tree-item" id="file-${f.name}" onclick="openFile('${f.name}')">
+                    <i class="fa-solid fa-file-code"></i> ${f.name}
+                </div>
+            `).join('');
+        }
     }
 
-    // --- RECURSIVE TREE LOGIC (GITHUB STYLE) ---
-    async function loadTree(repo, path) {
-        const treeElement = document.getElementById('file-tree');
-        treeElement.innerHTML = `<div class="loading-shimmer" style="padding:20px; font-size:12px;">Indexing ${repo}...</div>`;
+    async function openFile(fileName) {
+        activeFile = fileName;
+        updateStatus("FETCHING_ASSET", "pending");
         
-        const fetchPath = path ? `${username}/${repo}/${path}` : `${username}/${repo}`;
-        const { data, error } = await sb.storage.from('sites').list(fetchPath);
+        document.getElementById('welcome-view').classList.add('hidden');
+        document.getElementById('editor-view').classList.remove('hidden');
+        
+        // Update breadcrumb
+        document.getElementById('path-user').innerText = activeUser;
+        document.getElementById('path-repo').innerText = activeRepo;
+        document.getElementById('path-file').innerText = fileName;
 
-        if (error) {
-            treeElement.innerHTML = `<div style="padding:20px; color:var(--error);">Failed to fetch tree.</div>`;
+        try {
+            const url = `https://wolfcloud.onrender.com/${activeUser}/${activeRepo}/${fileName}`;
+            const res = await fetch(url);
+            const content = await res.text();
+            
+            const editor = document.getElementById('code-editor');
+            editor.value = content;
+            
+            // Detect Syntax
+            const ext = fileName.split('.').pop();
+            document.getElementById('syntax-info').innerText = ext.toUpperCase();
+            
+            handleInput();
+            updateStatus("FILE_READY", "success");
+            setTimeout(() => updateStatus("IDLE", "idle"), 2000);
+        } catch (e) {
+            updateStatus("FETCH_FAILED", "error");
+        }
+    }
+function syncScroll() {
+    const editor = document.getElementById('code-editor');
+    const highlight = document.getElementById('code-highlight');
+    const lineNums = document.getElementById('line-numbers');
+
+    // Force the background to "teleport" to the textarea's position
+    highlight.scrollTop = editor.scrollTop;
+    highlight.scrollLeft = editor.scrollLeft;
+    
+    // Line numbers only need vertical sync
+    if (lineNums) {
+        lineNums.scrollTop = editor.scrollTop;
+    }
+}
+function handleInput() {
+    const editor = document.getElementById('code-editor');
+    const highlight = document.getElementById('highlight-target');
+    const lineNums = document.getElementById('line-numbers');
+
+    let code = editor.value;
+
+    // 1. Sync Content
+    // Prism fix: Ensure trailing newlines are rendered so height matches
+    highlight.textContent = code + (code.endsWith('\n') ? ' ' : '');
+    Prism.highlightElement(highlight);
+
+    // 2. Update Line Numbers
+    // We split by newline to get the actual number of lines
+    const lineCount = code.split('\n').length;
+    
+    // Using a single string join is much more performant than repeated DOM injection
+    lineNums.innerHTML = Array.from({ length: lineCount }, (_, i) => `<span>${i + 1}</span>`)
+                              .join('');
+
+    syncScroll();
+}
+
+// Attach listeners to the window to ensure we catch everything
+document.getElementById('code-editor').addEventListener('scroll', syncScroll);
+document.getElementById('code-editor').addEventListener('input', handleInput);
+
+
+    function handleKey(e) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = e.target.selectionStart;
+            const end = e.target.selectionEnd;
+            e.target.value = e.target.value.substring(0, start) + "    " + e.target.value.substring(end);
+            e.target.selectionStart = e.target.selectionEnd = start + 4;
+            handleInput();
+        }
+    }
+
+    async function pushChanges() {
+        if (activeUser !== authUser) {
+            alert("Permission Denied: You cannot push to a remote user's repository.");
             return;
         }
 
-        let html = "";
-        
-        // Back Button if nested
-        if (path) {
-            const upPath = path.split('/').slice(0, -1).join('/');
-            html += `
-                <div class="tree-item folder" onclick="loadTree('${repo}', '${upPath}')">
-                    <i class="fa-solid fa-turn-up"></i>
-                    ..
-                </div>
-            `;
-        }
+        updateStatus("PUSHING_CHANGES", "pending");
+        const content = document.getElementById('code-editor').value;
+        const path = `${activeUser}/${activeRepo}/${activeFile}`;
 
-        data.forEach(item => {
-            const isFolder = !item.metadata;
-            const fullItemPath = path ? `${path}/${item.name}` : item.name;
-            
-            if (isFolder) {
-                html += `
-                    <div class="tree-item folder" onclick="loadTree('${repo}', '${fullItemPath}')">
-                        <i class="fa-solid fa-folder"></i>
-                        ${item.name}
-                    </div>
-                `;
-            } else {
-                html += `
-                    <div class="tree-item file" onclick="viewCode('${repo}', '${fullItemPath}')">
-                        <i class="fa-solid fa-file-code"></i>
-                        ${item.name}
-                    </div>
-                `;
-            }
-        });
+        const { error } = await sb.storage.from('sites').upload(path, content, { upsert: true });
 
-        treeElement.innerHTML = html;
-        updateStatus(`EXPLORING: ${repo}/${path}`, "ok");
-    }
-
-    // --- CODE ENGINE ---
-let currentFilePath = "";
-
-// 1. Improved View/Load Function
-async function viewCode(repo, filePath) {
-    currentFilePath = filePath;
-    const welcomeView = document.getElementById('welcome-view');
-    const editorView = document.getElementById('editor-view');
-    const codeArea = document.getElementById('code-area');
-    
-    welcomeView.classList.add('hidden');
-    editorView.classList.remove('hidden');
-
-    const target = `${CLOUD_URL}/${username}/${repo}/${filePath}`;
-    
-    try {
-        const res = await fetch(target);
-        const rawCode = await res.text();
-        
-        codeArea.innerText = rawCode;
-        updateEditorUI(); 
-        updateStatus(`EDITING: ${filePath.split('/').pop()}`, "ok");
-    } catch (err) {
-        updateStatus("FETCH_ERROR", "err");
-    }
-}
-
-// 2. Real-time Syntax Highlighting & Line Numbers
-function handleInput() {
-    updateEditorUI();
-}
-
-function updateEditorUI() {
-    const code = document.getElementById('code-area').innerText;
-    const highlightContent = document.getElementById('highlight-content');
-    const lineNums = document.getElementById('line-nums');
-
-    // Update Highlighted Layer
-    highlightContent.textContent = code;
-    Prism.highlightElement(highlightContent);
-
-    // Update Line Numbers
-    const lines = code.split('\n').length;
-    lineNums.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
-}
-
-// 3. Handle Tab Key (prevents focus leaving the editor)
-function handleTab(e) {
-    if (e.key === 'Tab') {
-        e.preventDefault();
-        document.execCommand('insertText', false, '    ');
-    }
-}
-
-// 4. SAVE FUNCTION (The "Write" Ability)
-async function saveFile() {
-    if (!activeRepo || !currentFilePath) return;
-
-    updateStatus("Saving to Cloud...", "ok");
-    const content = document.getElementById('code-area').innerText;
-    const fullPath = `${username}/${activeRepo}/${currentFilePath}`;
-
-    const { data, error } = await sb.storage
-        .from('sites')
-        .upload(fullPath, content, {
-            upsert: true, // This overwrites the existing file
-            contentType: 'text/plain'
-        });
-
-    if (error) {
-        console.error(error);
-        updateStatus("SAVE_FAILED", "err");
-        alert("Error saving: " + error.message);
-    } else {
-        updateStatus("FILE_SAVED_SUCCESSFULLY", "ok");
-        // Flash the footer green for a second
-        const f = document.querySelector('footer');
-        f.style.background = "#238636";
-        setTimeout(() => f.style.background = "var(--accent)", 1000);
-    }
-}
-
-    // --- UTILITIES ---
-    function updateStatus(msg, type) {
-        const footer = document.querySelector('footer');
-        const statusLeft = document.getElementById('status-left');
-        
-        statusLeft.innerHTML = `<i class="fa-solid fa-terminal"></i> ${msg.toUpperCase()}`;
-        
-        if (type === 'err') {
-            footer.style.background = 'var(--error)';
-            footer.style.color = '#fff';
+        if (!error) {
+            updateStatus("PUSH_SUCCESS", "success");
+            setTimeout(() => updateStatus("IDLE", "idle"), 3000);
         } else {
-            footer.style.background = 'var(--accent)';
-            footer.style.color = '#000';
+            updateStatus("PUSH_ERROR", "error");
         }
     }
 
-    function copyCode() {
-        const text = document.getElementById('code-area').innerText;
-        navigator.clipboard.writeText(text);
-        alert("Source Copied to Clipboard!");
+    function updateStatus(msg, type) {
+        const p = document.getElementById('status-pulse');
+        const m = document.getElementById('status-msg');
+        m.innerText = `READY_STATE: ${msg}`;
+        
+        p.className = "pulse-indicator";
+        if (type === 'pending') {
+            p.style.background = "var(--pending)";
+            p.classList.add('pulse-active');
+        } else if (type === 'success') {
+            p.style.background = "var(--success)";
+            p.classList.add('pulse-active');
+        } else if (type === 'error') {
+            p.style.background = "var(--error)";
+        } else {
+            p.style.background = "#30363d";
+        }
     }
 
-    window.onload = init;
+    function copySource() {
+        const val = document.getElementById('code-editor').value;
+        navigator.clipboard.writeText(val);
+        alert("Source code copied to clipboard.");
+    }
+
+    window.onload = boot;
+
+    function updateEditorHeight() {
+    const editor = document.getElementById('code-editor');
+    const highlight = document.getElementById('code-highlight');
+    
+    // Reset height to calculate correctly
+    editor.style.height = '50px'; 
+    
+    // Set height to the full scrollable height of the content
+    const newHeight = editor.scrollHeight + 20; 
+    editor.style.height = newHeight + 'px';
+    highlight.style.height = newHeight + 'px';
+}
 </script>
 </body>
 </html>
