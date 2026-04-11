@@ -502,36 +502,38 @@
         }
     }
 
-    async function openFile(fileName) {
-        activeFile = fileName;
-        updateStatus("FETCHING_ASSET", "pending");
-        
-        document.getElementById('welcome-view').classList.add('hidden');
-        document.getElementById('editor-view').classList.remove('hidden');
-        
-        // Update breadcrumb
-        document.getElementById('path-user').innerText = activeUser;
-        document.getElementById('path-repo').innerText = activeRepo;
-        document.getElementById('path-file').innerText = fileName;
+        async function openFile(fileName) {
+        activeFile = fileName;
+        updateStatus("FETCHING_ASSET", "pending");
 
-        try {
-            const url = `https://wolfcloud.onrender.com/${activeUser}/${activeRepo}/${fileName}`;
-            const res = await fetch(url);
-            const content = await res.text();
-            
-            const editor = document.getElementById('code-editor');
-            editor.value = content;
-            
-            // Detect Syntax
-            const ext = fileName.split('.').pop();
-            document.getElementById('syntax-info').innerText = ext.toUpperCase();
-            
-            handleInput();
-            updateStatus("FILE_READY", "success");
-            setTimeout(() => updateStatus("IDLE", "idle"), 2000);
-        } catch (e) {
-            updateStatus("FETCH_FAILED", "error");
-        }
+        document.getElementById('welcome-view').classList.add('hidden');
+        document.getElementById('editor-view').classList.remove('hidden');
+        // Update breadcrumb
+        document.getElementById('path-user').innerText = activeUser;
+        document.getElementById('path-repo').innerText = activeRepo;
+        document.getElementById('path-file').innerText = fileName;
+
+try {
+            const url = `https://wolfcloud.onrender.com/${activeUser}/${activeRepo}/${fileName}`;
+            const res = await fetch(url);
+            const content = await res.text();
+            
+            const editor = document.getElementById('code-editor');
+            editor.value = content;
+            
+            const ext = fileName.split('.').pop();
+            document.getElementById('syntax-info').innerText = ext.toUpperCase();
+            
+            // Use requestAnimationFrame to ensure DOM is ready for height calc
+            requestAnimationFrame(() => {
+                handleInput();
+                // Reset scroll to top for the new file
+                document.getElementById('editor-wrapper').scrollTop = 0;
+            });
+
+            updateStatus("FILE_READY", "success");
+            setTimeout(() => updateStatus("IDLE", "idle"), 2000);
+        }
 }
 
     // --- EDITOR CORE ---
