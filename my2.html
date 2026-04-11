@@ -197,46 +197,51 @@
             overflow: hidden;
         }
 
-        .code-input-wrapper {
-            flex: 1;
-            position: relative;
-            overflow: auto;
-        }
+/* --- UPDATED CSS --- */
+.code-input-wrapper {
+    flex: 1;
+    position: relative;
+    overflow: auto; /* The wrapper handles the scrollbars */
+    background: var(--bg-main);
+}
 
-        #code-editor, #code-highlight {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 20px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-            tab-size: 4;
-            white-space: pre;
-            word-wrap: normal;
-            border: none;
-            box-sizing: border-box;
-            min-width: 100%;
-            min-height: 100%;
-        }
+#code-editor, #code-highlight {
+    position: absolute;
+    top: 0; 
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    tab-size: 4;
+    white-space: pre;
+    word-wrap: normal;
+    border: none;
+    box-sizing: border-box;
+    display: block;
+}
 
-        #code-editor {
-            background: transparent;
-            color: transparent;
-            caret-color: #fff;
-            resize: none;
-            outline: none;
-            z-index: 2;
-            overflow: hidden; /* textarea scrolling handled by wrapper */
-        }
+#code-editor {
+    background: transparent;
+    color: transparent;
+    caret-color: #fff;
+    resize: none;
+    outline: none;
+    z-index: 2;
+    /* Important: textarea must grow to content so wrapper scrolls it */
+    overflow: hidden; 
+    min-height: 100%;
+}
 
-        #code-highlight {
-            z-index: 1;
-            pointer-events: none;
-            background: var(--bg-main);
-        }
+#code-highlight {
+    z-index: 1;
+    pointer-events: none;
+    background: var(--bg-main);
+    overflow: hidden; /* Let the wrapper handle the scroll */
+}
 
         /* --- FOOTER & STATUS --- */
         footer {
@@ -533,25 +538,32 @@
     }
 
     // --- EDITOR CORE ---
-    function handleInput() {
-        const editor = document.getElementById('code-editor');
-        const highlight = document.getElementById('highlight-target');
-        const lineNums = document.getElementById('line-numbers');
+function handleInput() {
+    const editor = document.getElementById('code-editor');
+    const highlight = document.getElementById('highlight-target');
+    const pre = document.getElementById('code-highlight');
+    const lineNums = document.getElementById('line-numbers');
 
-        // Update Code Layer
-        let code = editor.value;
-        if(code[code.length-1] === "\n") code += " "; // fix scrolling offset
-        highlight.textContent = code;
-        Prism.highlightElement(highlight);
+    let code = editor.value;
+    if(code[code.length-1] === "\n") code += " "; 
+    
+    highlight.textContent = code;
+    Prism.highlightElement(highlight);
 
-        // Update Line Numbers
-        const count = code.split('\n').length;
-        lineNums.innerHTML = Array.from({length: count}, (_, i) => i + 1).join('<br>');
+    // --- FIX: Sync heights so scrollbars appear ---
+    // We match the height of the textarea to its scrollHeight
+    editor.style.height = 'auto'; 
+    editor.style.height = editor.scrollHeight + 'px';
+    pre.style.height = editor.scrollHeight + 'px';
 
-        // Update Size
-        const bytes = new Blob([code]).size;
-        document.getElementById('file-size-info').innerText = (bytes / 1024).toFixed(2) + " KB";
-    }
+    // Update Line Numbers
+    const count = code.split('\n').length;
+    lineNums.innerHTML = Array.from({length: count}, (_, i) => i + 1).join('<br>');
+
+    // Update Size
+    const bytes = new Blob([code]).size;
+    document.getElementById('file-size-info').innerText = (bytes / 1024).toFixed(2) + " KB";
+}
 
     function syncScroll() {
         const wrapper = document.getElementById('editor-wrapper');
