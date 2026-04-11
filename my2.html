@@ -213,7 +213,7 @@
     left: 0;
     min-width: 100%;
     /* Remove fixed height: 100% so they can grow */
-    height: 7500px; 
+    height: auto; 
     margin: 0;
     padding: 20px;
     font-family: 'JetBrains Mono', monospace;
@@ -549,7 +549,7 @@ function handleInput() {
     Prism.highlightElement(highlight);
 
     // 1. Reset height to shrink if text was deleted
-    editor.style.height = 'auto'; 
+    editor.style.height = '7500px'; 
     
     // 2. Set new height based on content
     const fullHeight = editor.scrollHeight + 'px';
