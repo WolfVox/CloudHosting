@@ -199,10 +199,11 @@
 
 /* --- UPDATED CSS --- */
 /* --- CSS FIX --- */
+/* --- CSS FIX FOR ALIGNMENT AND SCROLL --- */
 .code-input-wrapper {
     flex: 1;
     position: relative;
-    overflow: hidden; /* We handle scrolling inside the children now */
+    overflow: hidden; /* Important: The children handle the scroll */
     background: var(--bg-main);
 }
 
@@ -211,39 +212,42 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%; /* Fill the container */
+    height: 100%;
     margin: 0;
-    padding: 20px;
-    font-family: 'JetBrains Mono', monospace; /* Must be identical */
-    font-size: 13px;
-    line-height: 1.6;
+    padding: 20px; /* Padding must be identical */
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 13px !important;
+    line-height: 1.6 !important;
     tab-size: 4;
     white-space: pre;
     word-wrap: normal;
-    box-sizing: border-box; /* Crucial for alignment */
+    box-sizing: border-box; /* Fixes the character offset */
     border: none;
     outline: none;
+    text-align: left; /* Ensures text starts at the same pixel */
 }
 
 #code-editor {
     z-index: 2;
     background: transparent;
     color: transparent;
-    caret-color: #fff; /* Makes cursor visible */
+    caret-color: #fff;
     resize: none;
-    overflow: auto; /* Allow the textarea to scroll */
+    overflow: auto; /* This is the element you actually scroll */
 }
 
 #code-highlight {
     z-index: 1;
-    pointer-events: none; /* Ignore mouse clicks */
+    pointer-events: none;
     background: var(--bg-main);
-    overflow: hidden; /* Controlled by JS syncScroll */
+    overflow: hidden; /* We will sync this via JS */
 }
 
-/* Ensure Prism doesn't add its own background or padding */
+/* Ensure Prism doesn't inject its own padding/margins */
 #code-highlight code {
     padding: 0 !important;
+    margin: 0 !important;
+    font-family: inherit !important;
     background: transparent !important;
 }
 
@@ -541,7 +545,19 @@
         }
     }
 
-    // --- EDITOR CORE ---
+function syncScroll() {
+    const editor = document.getElementById('code-editor');
+    const highlight = document.getElementById('code-highlight');
+    const lineNums = document.getElementById('line-numbers');
+    
+    // Sync the background highlight to the textarea scroll position
+    highlight.scrollTop = editor.scrollTop;
+    highlight.scrollLeft = editor.scrollLeft;
+    
+    // Sync the line numbers (only vertical)
+    lineNums.scrollTop = editor.scrollTop;
+}
+
 function handleInput() {
     const editor = document.getElementById('code-editor');
     const highlight = document.getElementById('highlight-target');
@@ -549,7 +565,7 @@ function handleInput() {
 
     let code = editor.value;
     
-    // Prism requires a trailing newline to render correctly when typing at the bottom
+    // Fix: Prism needs a space if the last char is a newline to keep height synced
     highlight.textContent = code + (code.endsWith('\n') ? ' ' : '');
     Prism.highlightElement(highlight);
     
@@ -560,19 +576,6 @@ function handleInput() {
     // Update Size Info
     const bytes = new Blob([code]).size;
     document.getElementById('file-size-info').innerText = (bytes / 1024).toFixed(2) + " KB";
-    
-    syncScroll(); // Ensure highlight matches immediately
-}
-
-function syncScroll() {
-    const editor = document.getElementById('code-editor');
-    const highlight = document.getElementById('code-highlight');
-    const lineNums = document.getElementById('line-numbers');
-    
-    // The textarea is the master of scrolling
-    highlight.scrollTop = editor.scrollTop;
-    highlight.scrollLeft = editor.scrollLeft;
-    lineNums.scrollTop = editor.scrollTop;
 }
 
 
