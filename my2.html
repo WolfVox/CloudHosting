@@ -583,11 +583,11 @@ function handleInput() {
 
     // 2. Update Line Numbers
     // We split by newline to get the actual number of lines
-    const lineCount = code.split('\n').length;
-    
-    // Using a single string join is much more performant than repeated DOM injection
-    lineNums.innerHTML = Array.from({ length: lineCount }, (_, i) => `<span>${i + 1}</span>`)
-                              .join('');
+// Update Line Numbers
+const actualLineCount = code.split('\n').length;
+const totalLineCount = actualLineCount + 125; // Add your extra 50 lines here
+
+lineNums.innerHTML = Array.from({ length: totalLineCount }, (_, i) => i + 1).join('<br>');
 
     syncScroll();
 }
