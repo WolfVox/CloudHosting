@@ -549,10 +549,10 @@ function handleInput() {
     Prism.highlightElement(highlight);
 
     // 1. Reset height to shrink if text was deleted
-    editor.style.height = '5000px'; 
+    editor.style.height = 'auto'; 
     
     // 2. Set new height based on content
-    const fullHeight = editor.scrollHeight + 'px';
+    const fullHeight = '500000px'; //editor.scrollHeight + 'px';
     editor.style.height = fullHeight;
     pre.style.height = fullHeight;
     
