@@ -552,8 +552,9 @@ function handleInput() {
     editor.style.height = 'auto'; 
     
     // 2. Set new height based on content
-    const fullHeight = '500000px'; //editor.scrollHeight + 'px';
+    const fullHeight = editor.scrollHeight + 'px';
     editor.style.height = fullHeight;
+    editor.scrollHeight = '50000px';
     pre.style.height = fullHeight;
     
     // 3. Sync Line Numbers height
