@@ -110,6 +110,10 @@
         return null;
     }
 
+    function eraseCookie(name) {
+        document.cookie = name + '=; Max-Age=-99999999; path=/; domain=.wolfvox.me;';
+    }
+
     // --- SUPABASE CONFIG ---
     let sb; 
     const SB_URL = "https://lqdrtozuoslhufhpqwae.supabase.co";
@@ -131,17 +135,22 @@
 
     // --- INITIALIZATION ---
     document.addEventListener('DOMContentLoaded', async () => {
+        // 1. Redirect if not logged in
         if (!user) {
             window.location.href = 'https://login.wolfvox.me';
             return;
         }
 
+        // 2. Initialize Supabase
         if (typeof supabase !== 'undefined') {
             sb = supabase.createClient(SB_URL, SB_KEY);
+            
+            // 3. Render UI Components
             renderUserNav();
             loadUserProjects();
             setupDragAndDrop();
         } else {
+            console.error("Supabase CDN failed to load.");
             document.getElementById('project-list').innerHTML = "Connection Error";
         }
     });
@@ -162,120 +171,40 @@
         `;
     }
 
-    async function loadUserProjects() {
-        const emailName = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-        const listContainer = document.getElementById('project-list');
-        const { data, error } = await sb.storage.from('sites').list(emailName);
+async function loadUserProjects() {
+    // FIX: Extract prefix from email instead of using display name
+    const emailName = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    const listContainer = document.getElementById('project-list');
 
-        if (error || !data || data.length === 0) {
-            listContainer.innerHTML = '<p class="text-[10px] text-gray-700">No projects yet.</p>';
-            return;
-        }
+    const { data, error } = await sb.storage.from('sites').list(emailName);
 
-        listContainer.innerHTML = data.map(item => `
-            <div onclick="prepUpdate('${item.name}')" class="group flex items-center justify-between p-2 hover:bg-white/5 rounded cursor-pointer transition">
-                <span class="text-sm text-gray-400 group-hover:text-white truncate">${item.name}</span>
-                <i class="fa-solid fa-chevron-right text-[10px] text-gray-800 group-hover:text-gray-400"></i>
-            </div>
-        `).join('');
+    if (error || !data || data.length === 0) {
+        listContainer.innerHTML = '<p class="text-[10px] text-gray-700">No projects yet.</p>';
+        return;
     }
 
-    // --- DEPLOYMENT LOGIC ---
-    async function handleDeploy() {
-        const slug = document.getElementById('proj-slug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
-        const emailName = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-        
-        if (!slug || window.selectedFiles.length === 0) {
-            return alert("Please enter a project slug and upload files.");
-        }
+    listContainer.innerHTML = data.map(item => `
+        <div onclick="prepUpdate('${item.name}')" class="group flex items-center justify-between p-2 hover:bg-white/5 rounded cursor-pointer transition">
+            <span class="text-sm text-gray-400 group-hover:text-white truncate">${item.name}</span>
+            <i class="fa-solid fa-chevron-right text-[10px] text-gray-800 group-hover:text-gray-400"></i>
+        </div>
+    `).join('');
+}
 
-        const btn = document.getElementById('deploy-btn');
-        const originalText = btn.innerText;
-        btn.innerText = "Syncing...";
-        btn.disabled = true;
-        
-        try {
-            // 1. Upload main project files
-            for (const file of window.selectedFiles) {
-                const path = `${emailName}/${slug}/${file.name}`;
-                const { error } = await sb.storage.from('sites').upload(path, file, { upsert: true });
-                if (error) throw error;
-            }
-
-            // 2. Refresh repo list to include the newest one
-            const { data: repos } = await sb.storage.from('sites').list(emailName);
-
-            // 3. Generate Profile HTML
-            const profileHTML = generateProfilePage(user, repos);
-            const profileBlob = new Blob([profileHTML], { type: 'text/html' });
-            
-            // 4. Upload to "profile" directory
-            const profilePath = `${emailName}/profile/index.html`;
-            const { error: profError } = await sb.storage.from('sites').upload(profilePath, profileBlob, { upsert: true });
-            if (profError) throw profError;
-            
-            alert("Deployment Successful! Profile Hub updated.");
-            resetForm();
-            loadUserProjects();
-        } catch (err) {
-            console.error("Upload error:", err);
-            alert("Upload failed. Check console for details.");
-        } finally {
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
-    }
-
-    function generateProfilePage(userData, repos) {
-        const emailName = userData.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-        const filteredRepos = repos.filter(r => r.name !== 'profile' && r.name !== '.emptyFolderPlaceholder');
-
-        const repoCards = filteredRepos.map(repo => `
-            <div onclick="window.location.href='https://${emailName}.wolfvox.me/${repo.name}'" class="border border-zinc-800 p-5 rounded-lg hover:border-zinc-600 transition group cursor-pointer bg-zinc-900/50">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-[#f38020] font-bold text-base hover:underline">${repo.name}</span>
-                    <span class="text-[10px] border border-zinc-800 px-2 py-0.5 rounded text-zinc-500 uppercase font-bold">Live</span>
-                </div>
-                <p class="text-xs text-zinc-500 mb-6 leading-relaxed">View deployment.</p>
-            </div>
-        `).join('');
-
-        return `<!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>${userData.name} | Hub</title>
-            <script src="https://cdn.tailwindcss.com"></script>
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-            <style>body { background-color: #000; color: #fff; font-family: 'Inter', sans-serif; }</style>
-        </head>
-        <body class="p-8">
-            <div class="max-w-4xl mx-auto">
-                <div class="flex items-center gap-6 mb-12">
-                    <img src="${userData.img}" class="w-24 h-24 rounded-full border-2 border-zinc-800">
-                    <div>
-                        <h1 class="text-3xl font-bold">${userData.name}</h1>
-                        <p class="text-zinc-500">@${emailName}</p>
-                        <div class="text-xs mt-2 text-zinc-400"><i class="fa-solid fa-users"></i> 0 followers</div>
-                    </div>
-                </div>
-                <h3 class="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-6">Deployments</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${repoCards}</div>
-            </div>
-        </body>
-        </html>`;
-    }
-
-    // --- MISC HELPERS ---
     function setupDragAndDrop() {
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-upload');
+
         dropZone.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-        ['dragover', 'dragleave', 'drop'].forEach(name => {
-            dropZone.addEventListener(name, (e) => { e.preventDefault(); e.stopPropagation(); });
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
+            dropZone.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
         });
+
         dropZone.addEventListener('dragover', () => dropZone.classList.add('drag-over'));
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
         dropZone.addEventListener('drop', (e) => {
@@ -289,17 +218,85 @@
         const valid = Array.from(files).filter(f => allowed.includes(f.name.split('.').pop().toLowerCase()));
         if (valid.length > 0) {
             window.selectedFiles = valid;
-            document.getElementById('file-label').innerHTML = `<span class="text-white font-bold">${valid.length} files</span> selected.`;
+            document.getElementById('file-label').innerHTML = `<span class="text-white font-bold">${valid.length} files</span> selected ready for upload.`;
         }
     }
 
-    function logout() {
-        const name = 'wv_user';
-        document.cookie = name + '=; Max-Age=-99999999; path=/; domain=.wolfvox.me; SameSite=Lax';
-        document.cookie = name + '=; Max-Age=-99999999; path=/;';
-        localStorage.removeItem(name);
-        window.location.href = 'https://login.wolfvox.me';
+async function handleDeploy() {
+    const slug = document.getElementById('proj-slug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+    const emailName = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    
+    if (!slug || window.selectedFiles.length === 0) {
+        return alert("Please enter a project slug and upload files.");
     }
+
+    const btn = document.getElementById('deploy-btn');
+    const originalText = btn.innerText;
+    btn.innerText = "Syncing...";
+    btn.disabled = true;
+    
+    try {
+        // 1. Upload Project Files
+        for (const file of window.selectedFiles) {
+            const path = `${emailName}/${slug}/${file.name}`;
+            const { error } = await sb.storage.from('sites').upload(path, file, { upsert: true });
+            if (error) throw error;
+        }
+
+        // 2. Fetch the external profile template
+        // Note: Ensure profile.html is accessible at this URL
+        const response = await fetch('/profile.html');
+        let template = await response.text();
+
+        // 3. Get fresh list of projects for the hub
+        const { data: projects } = await sb.storage.from('sites').list(emailName);
+        const projectLinks = projects
+            .filter(p => p.name !== 'profile' && p.name !== '.emptyFolderPlaceholder')
+            .map(p => `<li><a href="https://${emailName}.wolfvox.me/${p.name}">${p.name}</a></li>`)
+            .join('');
+
+        // 4. Inject Data into Template
+        // This assumes your profile.html has placeholders like {{name}} and {{projects}}
+        const finalHTML = template
+            .replace(/{{name}}/g, user.name)
+            .replace(/{{avatar}}/g, user.img)
+            .replace(/{{username}}/g, emailName)
+            .replace(/{{projects}}/g, projectLinks);
+
+        // 5. Upload finished Profile Hub
+        const profileBlob = new Blob([finalHTML], { type: 'text/html' });
+        const { error: profError } = await sb.storage.from('sites').upload(`${emailName}/profile/index.html`, profileBlob, { upsert: true });
+        
+        if (profError) throw profError;
+
+        alert("Deployment & Hub Update Successful!");
+        resetForm();
+        loadUserProjects();
+    } catch (err) {-
+        console.error("Deploy error:", err);
+        alert("Action failed. Check console.");
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
+
+function logout() {
+    // 1. Define the cookie name
+    const name = 'wv_user';
+    
+    // 2. Clear for the root domain (covers all subdomains)
+    document.cookie = name + '=; Max-Age=-99999999; path=/; domain=.wolfvox.me; SameSite=Lax';
+    
+    // 3. Clear for the current specific subdomain (just in case)
+    document.cookie = name + '=; Max-Age=-99999999; path=/;';
+    
+    // 4. Clear localStorage as a fallback
+    localStorage.removeItem(name);
+    
+    // 5. Redirect to login
+    window.location.href = 'https://login.wolfvox.me';
+}
 
     function prepUpdate(slug) {
         document.getElementById('proj-name').value = slug;
