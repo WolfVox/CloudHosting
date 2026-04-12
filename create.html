@@ -232,124 +232,92 @@ async function handleDeploy() {
 
     const btn = document.getElementById('deploy-btn');
     const originalText = btn.innerText;
-    btn.innerText = "Syncing...";
+    btn.innerText = "Syncing Hub...";
     btn.disabled = true;
     
     try {
-        // 1. Upload the actual project files
+        // 1. Upload current project files
         for (const file of window.selectedFiles) {
             const path = `${emailName}/${slug}/${file.name}`;
-            const { error } = await sb.storage.from('sites').upload(path, file, { upsert: true });
-            if (error) throw error;
+            await sb.storage.from('sites').upload(path, file, { upsert: true });
         }
 
-        // 2. FETCH ALL REPOS for the profile
+        // 2. Fetch all current repositories to build the profile
         const { data: repoList } = await sb.storage.from('sites').list(emailName);
         
-        // 3. GENERATE THE DYNAMIC PROFILE HTML
+        // 3. Generate and Auto-Deploy the updated Profile Page
         const profileHTML = generateProfilePage(user, repoList);
-
-        // 4. AUTO-DEPLOY THE PROFILE REPO
         const profileBlob = new Blob([profileHTML], { type: 'text/html' });
         const profilePath = `${emailName}/profile/index.html`;
+        
         await sb.storage.from('sites').upload(profilePath, profileBlob, { upsert: true });
         
-        alert("Deployment Successful! Profile synced.");
+        alert(`Deployed! View your hub at: https://${emailName}.wolfvox.me/profile`);
         resetForm();
         loadUserProjects();
     } catch (err) {
-        console.error("Upload error:", err);
-        alert("Upload failed.");
+        console.error("Sync Error:", err);
+        alert("Deployment failed. Check console.");
     } finally {
         btn.innerText = originalText;
         btn.disabled = false;
     }
 }
 
-/**
- * Generates the Profile HTML based on the template you provided
- */
 function generateProfilePage(userData, repos) {
-    // Filter out 'profile' from the list of repos so it doesn't list itself
-    const filteredRepos = repos.filter(r => r.name !== 'profile');
     const emailName = userData.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    // Exclude the profile folder itself from the list
+    const filteredRepos = repos.filter(r => r.name !== 'profile' && r.name !== '.emptyFolderPlaceholder');
 
-    // Create the repo cards HTML
     const repoCards = filteredRepos.map(repo => `
-        <div onclick="window.location.href='https://${emailName}.wolfvox.me/${repo.name}'" class="profile-border p-5 hover:border-zinc-700 transition group cursor-pointer">
+        <div onclick="window.location.href='https://${emailName}.wolfvox.me/${repo.name}'" 
+             class="profile-border p-5 hover:border-zinc-700 transition group cursor-pointer bg-[#080808] border border-[#1f1f1f] rounded-lg">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-accent font-bold text-base hover:underline">${repo.name}</span>
-                <span class="text-[10px] border border-zinc-800 px-2 py-0.5 rounded text-zinc-500 uppercase font-bold">Deployment</span>
+                <span class="text-[#f38020] font-bold text-base group-hover:underline">${repo.name}</span>
+                <span class="text-[10px] border border-zinc-800 px-2 py-0.5 rounded text-zinc-500 uppercase font-bold">Live</span>
             </div>
-            <p class="text-xs text-zinc-500 mb-6 leading-relaxed">Live deployment on WolfVox Network.</p>
+            <p class="text-xs text-zinc-500 mb-6 leading-relaxed">Deployed on WolfVox Edge Network.</p>
             <div class="flex items-center gap-4 text-[10px] font-bold text-zinc-600 uppercase">
-                <span class="flex items-center gap-1.5"><span class="w-2 h-2 bg-accent rounded-full"></span> HTML / Static</span>
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 bg-[#f38020] rounded-full"></span> Production</span>
             </div>
         </div>
     `).join('');
 
-    // Returning your exact template with the logic injected
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${userData.name} | Governor Profile</title>
+    <title>${userData.name} | Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000000; --card-bg: #080808; --border: #1f1f1f; --accent: #f38020; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: #d1d1d1; }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        .profile-border { border: 1px solid var(--border); border-radius: 8px; background-color: var(--card-bg); }
-        .nav-item-active { border-bottom: 2px solid var(--accent); color: #ffffff; font-weight: 600; }
-        .contribution-box { width: 12px; height: 12px; border-radius: 2px; background-color: #1a1a1a; }
-        .lvl-4 { background-color: #f38020; }
-        .text-accent { color: var(--accent); }
+        body { background-color: #000; color: #d1d1d1; font-family: 'Inter', sans-serif; }
+        .profile-border { border: 1px solid #1f1f1f; border-radius: 8px; }
     </style>
 </head>
-<body>
-    <nav class="bg-black border-b border-[#1f1f1f] px-8 py-4 flex items-center justify-between sticky top-0 z-50">
-        <div class="flex items-center gap-8">
-            <div class="flex items-center gap-3">
-                <span class="text-white font-bold tracking-tighter text-lg">WOLF<span class="text-accent">VOX</span></span>
+<body class="p-4 md:p-12">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+        <aside class="md:col-span-1">
+            <img src="${userData.img}" class="w-full aspect-square rounded-2xl border-2 border-[#1f1f1f] mb-4 shadow-2xl">
+            <h1 class="text-2xl font-bold text-white">${userData.name}</h1>
+            <p class="text-zinc-500 mb-6">@${emailName}</p>
+            <div class="flex items-center gap-2 text-sm text-zinc-400 mb-6">
+                <i class="fa-solid fa-users text-zinc-600"></i> <span class="text-white font-bold">0</span> followers
             </div>
-        </div>
-    </nav>
-
-    <div class="max-w-7xl mx-auto px-4 md:px-8 mt-10">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div class="md:col-span-1">
-                <div class="relative mb-6">
-                    <img src="${userData.img}" class="w-full aspect-square rounded-2xl border-2 border-[#1f1f1f] bg-[#050505] p-1" alt="Profile Picture">
-                    <div class="absolute -bottom-3 -right-3 bg-black border border-zinc-800 p-2 rounded-xl shadow-2xl">
-                        <span class="text-accent text-xs font-bold mono">GOVERNOR</span>
-                    </div>
-                </div>
-                <h1 class="text-2xl font-bold text-white">${userData.name}</h1>
-                <p class="text-xl text-zinc-500 font-light mb-4">${emailName}</p>
-                
-                <div class="flex items-center gap-4 text-sm text-zinc-400 mb-6">
-                    <div class="flex items-center gap-1"><i class="fa-solid fa-users text-zinc-600"></i> <span class="text-white font-bold">0</span> followers</div>
-                </div>
-
-                <div class="space-y-3 text-sm text-zinc-300">
-                    <div class="flex items-center gap-3"><i class="fa-solid fa-building text-accent w-4 text-center"></i> @wolfvoxco</div>
-                    <div class="flex items-center gap-3"><i class="fa-regular fa-envelope text-accent w-4 text-center"></i> ${userData.email}</div>
-                </div>
+            <div class="space-y-3 text-sm">
+                <div class="flex items-center gap-3"><i class="fa-regular fa-envelope text-[#f38020]"></i> ${userData.email}</div>
+                <div class="flex items-center gap-3"><i class="fa-solid fa-link text-[#f38020]"></i> wolfvox.me</div>
             </div>
-
-            <div class="md:col-span-3">
-                <div class="flex items-center gap-8 border-b border-[#1f1f1f] mb-8">
-                    <div class="nav-item-active pb-4 text-sm flex items-center gap-2">Overview</div>
-                </div>
-                <h3 class="text-sm font-bold text-white uppercase tracking-widest mb-4">Core Deployments</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-                    ${repoCards}
-                </div>
+        </aside>
+        <main class="md:col-span-3">
+            <div class="border-b border-[#1f1f1f] pb-4 mb-8">
+                <h2 class="text-white font-semibold">Active Deployments</h2>
             </div>
-        </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                ${repoCards.length > 0 ? repoCards : '<p class="text-zinc-600 italic">No public deployments found.</p>'}
+            </div>
+        </main>
     </div>
 </body>
 </html>`;
