@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{name}} | WolfVox Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg: #000000;
+            --card-bg: #080808;
+            --border: #1f1f1f;
+            --accent: #f38020; 
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: #d1d1d1; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .profile-border { border: 1px solid var(--border); border-radius: 8px; background-color: var(--card-bg); }
+        .nav-item-active { border-bottom: 2px solid var(--accent); color: #ffffff; font-weight: 600; }
+        .contribution-box { width: 12px; height: 12px; border-radius: 2px; background-color: #1a1a1a; }
+        .lvl-1 { background-color: #45260a; }
+        .lvl-2 { background-color: #854512; }
+        .lvl-3 { background-color: #c2611a; }
+        .lvl-4 { background-color: #f38020; }
+        .text-accent { color: var(--accent); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* Grid styling for the injected projects list */
+        #project-grid-container {
+            display: grid;
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+            gap: 1rem;
+        }
+        @media (min-width: 768px) {
+            #project-grid-container { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <nav class="bg-black border-b border-[#1f1f1f] px-8 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <img src="https://github.com/WolfVox/Logos/blob/main/baseiconwhite.png?raw=true" class="w-8 h-8" alt="WolfVox">
+            <span class="text-white font-bold tracking-tighter text-lg uppercase">WolfVox <span class="text-accent">Hub</span></span>
+        </div>
+        <img src="{{avatar}}" class="w-7 h-7 rounded-full border border-zinc-800">
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 md:px-8 mt-10">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+            
+            <div class="md:col-span-1">
+                <div class="relative mb-6">
+                    <img src="{{avatar}}" class="w-full aspect-square rounded-2xl border-2 border-[#1f1f1f] bg-[#050505] object-cover" alt="Profile">
+                    <div class="absolute -bottom-3 -right-2 bg-black border border-zinc-800 px-3 py-1 rounded-lg shadow-2xl">
+                        <span class="text-accent text-[10px] font-bold mono uppercase">Cloud Citizen</span>
+                    </div>
+                </div>
+
+                <h1 class="text-2xl font-bold text-white">{{name}}</h1>
+                <p class="text-xl text-zinc-500 font-light mb-4">@{{username}}</p>
+                
+                <p class="text-sm text-zinc-400 mb-6 leading-relaxed">
+                    Personal WolfCloud Space. Managing decentralized applications and static deployments.
+                </p>
+
+                <div class="space-y-3 text-sm text-zinc-300 border-t border-zinc-900 pt-6">
+                    <div class="flex items-center gap-3"><i class="fa-solid fa-link text-accent w-4"></i> <span class="hover:text-white cursor-pointer">{{username}}.wolfvox.me</span></div>
+                    <div class="flex items-center gap-3"><i class="fa-solid fa-shield-halved text-accent w-4"></i> Verified Account</div>
+                </div>
+            </div>
+
+            <div class="md:col-span-3">
+                <div class="flex items-center gap-8 border-b border-[#1f1f1f] mb-8">
+                    <div class="nav-item-active pb-4 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group"></i> Deployments
+                    </div>
+                </div>
+
+                <div id="project-grid-container" class="mb-10">
+                    {{projects}}
+                </div>
+
+                <div class="profile-border p-6 mb-10">
+                    <div class="flex justify-between items-center mb-6">
+                        <span class="text-xs font-bold text-zinc-400 uppercase tracking-tighter">Activity Heatmap</span>
+                        <span class="text-[10px] text-zinc-600 mono">NODE_STATUS: ONLINE</span>
+                    </div>
+                    
+                    <div class="flex gap-1 overflow-x-auto pb-4 no-scrollbar" id="heatmap">
+                        <script>
+                            const heat = document.getElementById('heatmap');
+                            for (let i = 0; i < 40; i++) {
+                                let col = document.createElement('div');
+                                col.className = "flex flex-col gap-1";
+                                for (let j = 0; j < 7; j++) {
+                                    let box = document.createElement('div');
+                                    let r = Math.random();
+                                    let lvl = r > 0.9 ? 'lvl-4' : r > 0.8 ? 'lvl-3' : r > 0.7 ? 'lvl-2' : r > 0.6 ? 'lvl-1' : '';
+                                    box.className = `contribution-box ${lvl}`;
+                                    col.appendChild(box);
+                                }
+                                heat.appendChild(col);
+                            }
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-24 py-12 border-t border-[#1f1f1f] bg-[#050505]">
+        <div class="max-w-7xl mx-auto px-8 flex justify-between items-center">
+            <span class="text-zinc-600 text-xs font-bold uppercase tracking-widest">© 2026 WolfVox Hub</span>
+            <div class="flex gap-6 text-[10px] font-bold text-zinc-500 uppercase">
+                <a href="#" class="hover:text-accent">Terms</a>
+                <a href="#" class="hover:text-accent">Privacy</a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
